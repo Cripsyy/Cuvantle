@@ -48,6 +48,32 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
+
+# IDE and Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python virtual environments
+.venv/
+.env/
+venv/
+env/
+
+# Generated word files (these can be regenerated)
+romanian_5_letter_words.txt
+copy_words.py
 .pytest_cache/
 cover/
 
