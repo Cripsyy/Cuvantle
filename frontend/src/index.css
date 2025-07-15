@@ -45,34 +45,11 @@
   
   .key {
     background-color: var(--color-key-bg);
-    @apply px-3 py-4 text-gray-900 font-bold rounded cursor-pointer hover:bg-gray-300 transition-colors duration-150;
+    @apply px-3 py-4 text-gray-900 font-bold rounded cursor-pointer transition-colors duration-150 min-h-[60px];
   }
   
-  .key-correct {
-    background-color: var(--color-correct);
-    @apply text-white;
-  }
-  
-  .key-correct:hover {
-    background-color: var(--color-correct);
-  }
-  
-  .key-present {
-    background-color: var(--color-present);
-    @apply text-white;
-  }
-  
-  .key-present:hover {
-    background-color: var(--color-present);
-  }
-  
-  .key-absent {
-    background-color: var(--color-absent);
-    @apply text-white;
-  }
-  
-  .key-absent:hover {
-    background-color: var(--color-absent);
+  .key:hover:not([style*="background-color"]) {
+    @apply bg-gray-300;
   }
 
   /* Animation classes */

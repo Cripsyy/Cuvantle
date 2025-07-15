@@ -173,6 +173,15 @@ const App: React.FC = () => {
     setMessage('');
   };
 
+  // Romanian character mapping for keyboard input
+  const romanianCharMap: Record<string, string> = {
+    '[': 'ă',
+    ']': 'î', 
+    '\\': 'â',
+    ';': 'ș',
+    "'": 'ț'
+  };
+
   // Handle physical keyboard input
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -182,7 +191,13 @@ const App: React.FC = () => {
         handleKeyPress('ENTER');
       } else if (key === 'Backspace') {
         handleKeyPress('BACKSPACE');
-      } else if (/^[a-zăîâșț]$/i.test(key)) {
+      } else if (/^[a-z]$/i.test(key)) {
+        handleKeyPress(key.toLowerCase());
+      } else if (romanianCharMap[key]) {
+        // Map Romanian characters from US keyboard layout
+        handleKeyPress(romanianCharMap[key]);
+      } else if (/^[ăîâșț]$/i.test(key)) {
+        // Direct Romanian characters (if user has Romanian keyboard layout)
         handleKeyPress(key.toLowerCase());
       }
     };
@@ -198,7 +213,7 @@ const App: React.FC = () => {
 
   const handleHelpClick = () => {
     // TODO: Implement help modal
-    showMessage('Ghici cuvântul românesc de 5 litere în 6 încercări!');
+    showMessage('Ghici cuvântul românesc de 5 litere în 6 încercări! Pentru diacritice: [ = ă, ] = î, \\ = â, ; = ș, \' = ț', 4000);
   };
 
   return (

@@ -34,6 +34,7 @@ export const updateKeyboardLetters = (
   guess: string,
   states: LetterState[]
 ): Record<string, LetterState> => {
+  console.log('Updating keyboard letters:', { currentKeyboard, guess, states }); // Debug log
   const newKeyboard = { ...currentKeyboard };
   
   for (let i = 0; i < guess.length; i++) {
@@ -46,9 +47,11 @@ export const updateKeyboardLetters = (
         (state === 'correct') ||
         (state === 'present' && newKeyboard[letter] === 'absent')) {
       newKeyboard[letter] = state;
+      console.log(`Updated keyboard letter ${letter} to state ${state}`); // Debug log
     }
   }
   
+  console.log('New keyboard state:', newKeyboard); // Debug log
   return newKeyboard;
 };
 
