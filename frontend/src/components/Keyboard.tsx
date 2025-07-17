@@ -18,7 +18,7 @@ const Key: React.FC<KeyProps> = ({ value, state, onClick, isLarge = false }) => 
     let classes = 'key';
     
     if (isLarge) {
-      classes += ' px-4';
+      classes += ' w-20'; // Even wider for ENTER and BACKSPACE
     }
     
     // Don't add state classes here - we'll handle colors with inline styles
@@ -38,7 +38,7 @@ const Key: React.FC<KeyProps> = ({ value, state, onClick, isLarge = false }) => 
       baseStyle.color = 'white';
       console.log(`Setting ${value} to present (yellow) style`);
     } else if (state === 'absent') {
-      baseStyle.backgroundColor = '#3a3a3c';
+      baseStyle.backgroundColor = '#505060';
       baseStyle.color = 'white';
       console.log(`Setting ${value} to absent (dark gray) style`);
     }
@@ -66,9 +66,11 @@ const Key: React.FC<KeyProps> = ({ value, state, onClick, isLarge = false }) => 
     >
       <div className="flex flex-col items-center">
         <span className="uppercase">{value}</span>
-        {displayMapping && (
-          <span className="text-xs opacity-60 mt-1">{displayMapping}</span>
-        )}
+        <div className="flex items-center h-4"> {/* Fixed height container for mapping */}
+          {displayMapping && (
+            <span className="text-xs opacity-60">{displayMapping}</span>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -83,30 +85,63 @@ const Keyboard: React.FC<KeyboardProps> = ({ onKeyPress, keyboardLetters }) => {
   // Debug log to check keyboard letters state
   console.log('Keyboard received keyboardLetters:', keyboardLetters);
   
-  // Romanian keyboard layout
-  const firstRow = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'ă'];
+  // Authentic Romanian keyboard layout
+  const firstRow = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'ă', 'î', 'â'];
   const secondRow = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ș', 'ț'];
-  const thirdRow = ['ENTER', 'z', 'x', 'c', 'v', 'b', 'n', 'm', 'î', 'â', 'BACKSPACE'];
-
-  const renderRow = (keys: string[]) => (
-    <div className="flex gap-1 justify-center">
-      {keys.map((key) => (
-        <Key
-          key={key}
-          value={key}
-          state={keyboardLetters[key]}
-          onClick={onKeyPress}
-          isLarge={key === 'ENTER' || key === 'BACKSPACE'}
-        />
-      ))}
-    </div>
-  );
+  const thirdRow = ['z', 'x', 'c', 'v', 'b', 'n', 'm'];
 
   return (
-    <div className="flex flex-col gap-2 p-4 max-w-lg mx-auto">
-      {renderRow(firstRow)}
-      {renderRow(secondRow)}
-      {renderRow(thirdRow)}
+    <div className="flex flex-col max-w-2xl gap-2 p-4 mx-auto">
+      {/* First row - Q to Â */}
+      <div className="flex justify-center gap-1">
+        {firstRow.map((key) => (
+          <Key
+            key={key}
+            value={key}
+            state={keyboardLetters[key]}
+            onClick={onKeyPress}
+            isLarge={false}
+          />
+        ))}
+      </div>
+      
+      {/* Second row - A to Ț with slight stagger */}
+      <div className="flex justify-center gap-1">
+        {secondRow.map((key) => (
+          <Key
+            key={key}
+            value={key}
+            state={keyboardLetters[key]}
+            onClick={onKeyPress}
+            isLarge={false}
+          />
+        ))}
+      </div>
+      
+      {/* Third row - ENTER, letters, BACKSPACE */}
+      <div className="flex justify-center gap-1">
+        <Key
+          value="ENTER"
+          state={keyboardLetters['ENTER']}
+          onClick={onKeyPress}
+          isLarge={true}
+        />
+        {thirdRow.map((key) => (
+          <Key
+            key={key}
+            value={key}
+            state={keyboardLetters[key]}
+            onClick={onKeyPress}
+            isLarge={false}
+          />
+        ))}
+        <Key
+          value="BACKSPACE"
+          state={keyboardLetters['BACKSPACE']}
+          onClick={onKeyPress}
+          isLarge={true}
+        />
+      </div>
     </div>
   );
 };
