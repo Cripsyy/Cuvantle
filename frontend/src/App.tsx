@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Board from './components/Board';
 import Keyboard from './components/Keyboard';
-import { GameState, Tile } from './types/game';
+import StatsModal from './components/StatsModal';
+import { GameState, Tile, GameStats } from './types/game';
 import { getRandomWord, isValidWord } from './utils/words';
 import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost } from './utils/gameLogic';
+import { getStoredStats, saveStats, updateStats } from './utils/stats';
 
 const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;
@@ -34,6 +36,8 @@ const App: React.FC = () => {
   const [isRevealing, setIsRevealing] = useState(false);
   const [shakingRow, setShakingRow] = useState<number | undefined>();
   const [message, setMessage] = useState<string>('');
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [stats, setStats] = useState<GameStats>(() => getStoredStats());
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check localStorage for saved preference
     const saved = localStorage.getItem('darkMode');
@@ -155,12 +159,24 @@ const App: React.FC = () => {
         newGameStatus = 'lost';
       }
 
-      // Show end game messages
+      // Show end game messages and update stats
       setTimeout(() => {
         if (won) {
           showMessage('Felicitări! Ai ghicit cuvântul!', 5000);
+          // Update stats for win
+          const newStats = updateStats(stats, true, prevState.currentRow + 1);
+          setStats(newStats);
+          saveStats(newStats);
+          // Show stats modal after a delay
+          setTimeout(() => setShowStatsModal(true), 2000);
         } else if (lost) {
           showMessage(`Cuvântul era: ${gameState.targetWord.toUpperCase()}`, 5000);
+          // Update stats for loss
+          const newStats = updateStats(stats, false, 0);
+          setStats(newStats);
+          saveStats(newStats);
+          // Show stats modal after a delay
+          setTimeout(() => setShowStatsModal(true), 2000);
         }
       }, 600);
 
@@ -177,7 +193,8 @@ const App: React.FC = () => {
 
     // Start the revealing animation after state update
     setIsRevealing(true);
-    setTimeout(() => setIsRevealing(false), 600);
+    // Each tile has 100ms delay, last tile starts at 400ms + 600ms animation = 1000ms total
+    setTimeout(() => setIsRevealing(false), 1000);
   };
 
   const resetGame = () => {
@@ -191,6 +208,7 @@ const App: React.FC = () => {
       keyboardLetters: {}
     });
     setMessage('');
+    setShowStatsModal(false);
   };
 
   // Romanian character mapping for keyboard input
@@ -227,8 +245,7 @@ const App: React.FC = () => {
   }, [handleKeyPress]);
 
   const handleStatsClick = () => {
-    // TODO: Implement stats modal
-    showMessage('Statisticile vor fi disponibile în curând!');
+    setShowStatsModal(true);
   };
 
   const handleHelpClick = () => {
@@ -237,7 +254,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="flex flex-col min-h-screen text-gray-900 bg-white dark:bg-gray-900 dark:text-gray-100">
       <Header 
         onStatsClick={handleStatsClick} 
         onHelpClick={handleHelpClick}
@@ -245,7 +262,7 @@ const App: React.FC = () => {
         onDarkModeToggle={toggleDarkMode}
       />
       
-      <main className="flex-1 flex flex-col items-center justify-center py-8">
+      <main className="flex flex-col items-center justify-center flex-1 py-8">
         <div className="mb-4">
           <Board 
             board={gameState.board}
@@ -256,7 +273,7 @@ const App: React.FC = () => {
         </div>
         
         {message && (
-          <div className="mb-4 px-4 py-2 bg-gray-800 dark:bg-gray-700 text-white rounded-md text-center">
+          <div className="px-4 py-2 mb-4 text-center text-white bg-gray-800 rounded-md dark:bg-gray-700">
             {message}
           </div>
         )}
@@ -271,12 +288,18 @@ const App: React.FC = () => {
         {(gameState.gameStatus === 'won' || gameState.gameStatus === 'lost') && (
           <button
             onClick={resetGame}
-            className="px-6 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-semibold"
+            className="px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
           >
             Joc Nou
           </button>
         )}
       </main>
+      
+      <StatsModal
+        isOpen={showStatsModal}
+        onClose={() => setShowStatsModal(false)}
+        stats={stats}
+      />
     </div>
   );
 };
