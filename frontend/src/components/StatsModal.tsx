@@ -10,65 +10,14 @@ interface StatsModalProps {
 }
 
 const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, stats, nextGameCountdown }) => {
-  const [copied, setCopied] = useState(false);
-
-  if (!isOpen) return null;
 
   const winPercentage = getWinPercentage(stats);
   const averageGuesses = getAverageGuesses(stats);
-
-  const generateShareText = (): string => {
-    const gameNumber = stats.gamesPlayed;
-    const attempts = stats.gamesWon > 0 ? averageGuesses.toString() : 'X';
-    
-    let shareText = `Cuvântle ${gameNumber} ${attempts}/6\n\n`;
-    
-    // Add guess distribution visualization
-    for (let i = 0; i < stats.guessDistribution.length; i++) {
-      const count = stats.guessDistribution[i];
-      if (count > 0) {
-        shareText += `${i + 1}: ${'🟩'.repeat(Math.min(count, 10))}\n`;
-      }
-    }
-    
-    shareText += `\n${winPercentage}% victorii, seria ${stats.currentStreak}`;
-    return shareText;
-  };
-
-  const handleShare = async () => {
-    const shareText = generateShareText();
-    
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Cuvântle - Statisticile mele',
-          text: shareText
-        });
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareText);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  };
 
   if (!isOpen) return null;
 
   // Calculate the maximum value for the bar chart
   const maxDistribution = Math.max(...stats.guessDistribution);
-
-  const formatTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -97,11 +46,11 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, stats, nextGam
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.currentStreak}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Seria actuală</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Victorii consecutive</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.maxStreak}</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Cea mai bună</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Victorii consecutive maxime</div>
           </div>
         </div>
 
@@ -144,28 +93,6 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, stats, nextGam
             </div>
           </div>
         )}
-
-        {/* Next Game Countdown */}
-        {nextGameCountdown !== undefined && (
-          <div className="p-4 text-center rounded-lg bg-blue-50 dark:bg-blue-900/20">
-            <div className="mb-1 text-sm text-gray-600 dark:text-gray-400">
-              URMĂTORUL CUVÂNT ÎN
-            </div>
-            <div className="font-mono text-xl font-bold text-blue-600 dark:text-blue-400">
-              {formatTime(nextGameCountdown)}
-            </div>
-          </div>
-        )}
-
-        {/* Share Button */}
-        <div className="flex justify-center mt-6">
-          <button
-            onClick={handleShare}
-            className="px-6 py-2 font-semibold text-white transition-colors bg-green-600 rounded-lg dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600"
-          >
-            {copied ? 'Copiat!' : 'Partajează'}
-          </button>
-        </div>
       </div>
     </div>
   );

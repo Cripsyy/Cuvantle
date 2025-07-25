@@ -23,16 +23,8 @@ const createEmptyBoard = (): Tile[][] => {
 };
 
 const App: React.FC = () => {
-  const [gameState, setGameState] = useState<GameState>({
-    board: createEmptyBoard(),
-    currentRow: 0,
-    currentCol: 0,
-    gameStatus: 'playing',
-    targetWord: getRandomWord(),
-    guesses: [],
-    keyboardLetters: {}
-  });
-
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isRevealing, setIsRevealing] = useState(false);
   const [shakingRow, setShakingRow] = useState<number | undefined>();
   const [message, setMessage] = useState<string>('');
@@ -43,6 +35,28 @@ const App: React.FC = () => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
+
+  // Ensure words are loaded before initializing the game
+  useEffect(() => {
+    let isMounted = true;
+    import('./utils/words').then(wordsModule => {
+      wordsModule.loadWordsFromFile().then(() => {
+        if (isMounted) {
+          setGameState({
+            board: createEmptyBoard(),
+            currentRow: 0,
+            currentCol: 0,
+            gameStatus: 'playing',
+            targetWord: wordsModule.getRandomWord(),
+            guesses: [],
+            keyboardLetters: {}
+          });
+          setIsLoading(false);
+        }
+      });
+    });
+    return () => { isMounted = false; };
+  }, []);
 
   // Apply dark mode to document
   useEffect(() => {
@@ -65,7 +79,7 @@ const App: React.FC = () => {
   };
 
   const handleKeyPress = useCallback((key: string) => {
-    if (gameState.gameStatus !== 'playing' || isRevealing) {
+    if (!gameState || gameState.gameStatus !== 'playing' || isRevealing) {
       return;
     }
 
@@ -76,12 +90,13 @@ const App: React.FC = () => {
     } else if (key.length === 1 && /^[a-zăîâșț]$/i.test(key)) {
       handleLetterInput(key.toLowerCase());
     }
-  }, [gameState.gameStatus, gameState.currentRow, gameState.currentCol, isRevealing]);
+  }, [gameState?.gameStatus, gameState?.currentRow, gameState?.currentCol, isRevealing]);
 
   const handleLetterInput = (letter: string) => {
-    if (gameState.currentCol >= WORD_LENGTH) return;
+    if (!gameState || gameState.currentCol >= WORD_LENGTH) return;
 
     setGameState(prevState => {
+      if (!prevState) return prevState;
       const newBoard = [...prevState.board];
       newBoard[prevState.currentRow][prevState.currentCol] = {
         letter: letter,
@@ -97,9 +112,10 @@ const App: React.FC = () => {
   };
 
   const handleBackspace = () => {
-    if (gameState.currentCol <= 0) return;
+    if (!gameState || gameState.currentCol <= 0) return;
 
     setGameState(prevState => {
+      if (!prevState) return prevState;
       const newBoard = [...prevState.board];
       newBoard[prevState.currentRow][prevState.currentCol - 1] = createEmptyTile();
 
@@ -112,6 +128,7 @@ const App: React.FC = () => {
   };
 
   const handleSubmitGuess = () => {
+    if (!gameState) return;
     if (gameState.currentCol !== WORD_LENGTH) {
       showMessage('Nu ai suficiente litere!');
       setShakingRow(gameState.currentRow);
@@ -135,6 +152,7 @@ const App: React.FC = () => {
     
     // Update the game state immediately
     setGameState(prevState => {
+      if (!prevState) return prevState;
       const newBoard = [...prevState.board];
       const newGuesses = [...prevState.guesses, currentGuess];
       
@@ -198,17 +216,21 @@ const App: React.FC = () => {
   };
 
   const resetGame = () => {
-    setGameState({
-      board: createEmptyBoard(),
-      currentRow: 0,
-      currentCol: 0,
-      gameStatus: 'playing',
-      targetWord: getRandomWord(),
-      guesses: [],
-      keyboardLetters: {}
+    import('./utils/words').then(wordsModule => {
+      wordsModule.loadWordsFromFile().then(() => {
+        setGameState({
+          board: createEmptyBoard(),
+          currentRow: 0,
+          currentCol: 0,
+          gameStatus: 'playing',
+          targetWord: wordsModule.getRandomWord(),
+          guesses: [],
+          keyboardLetters: {}
+        });
+        setMessage('');
+        setShowStatsModal(false);
+      });
     });
-    setMessage('');
-    setShowStatsModal(false);
   };
 
   // Romanian character mapping for keyboard input
@@ -252,6 +274,14 @@ const App: React.FC = () => {
     // TODO: Implement help modal
     showMessage('Ghici cuvântul românesc de 5 litere în 6 încercări! Pentru diacritice: [ = ă, ] = î, \\ = â, ; = ș, \' = ț', 4000);
   };
+
+  if (isLoading || !gameState) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-gray-900 bg-white dark:bg-gray-900 dark:text-gray-100">
+        <div className="text-xl font-semibold">Se încarcă cuvintele...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen text-gray-900 bg-white dark:bg-gray-900 dark:text-gray-100">
