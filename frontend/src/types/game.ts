@@ -22,3 +22,8 @@ export interface GameStats {
   maxStreak: number;
   guessDistribution: number[];
 }
+
+export interface GameSettings {
+  wordLength: number;
+  isDarkMode: boolean;
+}

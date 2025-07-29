@@ -22,7 +22,18 @@
 
 @layer components {
   .tile {
-    @apply flex items-center justify-center text-xl font-bold uppercase transition-all duration-300 border-2 border-gray-300 dark:border-gray-600 w-14 h-14;
+    @apply flex items-center justify-center text-xl font-bold uppercase transition-all duration-300 border-2 border-gray-300 dark:border-gray-600;
+    /* Responsive sizing based on word length */
+    width: clamp(40px, calc(100vw / 16), 56px);
+    height: clamp(40px, calc(100vw / 16), 56px);
+    font-size: clamp(14px, calc(100vw / 25), 20px);
+  }
+  
+  /* Specific sizes for different word lengths on larger screens */
+  @media (min-width: 640px) {
+    .tile {
+      @apply w-14 h-14 text-xl;
+    }
   }
   
   .tile-filled {

@@ -3,12 +3,13 @@ import { LetterState, Tile } from '../types/game';
 export const checkGuess = (guess: string, targetWord: string): LetterState[] => {
   console.log('Checking guess:', guess, 'against target:', targetWord); // Debug log
   
-  const result: LetterState[] = new Array(5).fill('absent');
+  const wordLength = targetWord.length;
+  const result: LetterState[] = new Array(wordLength).fill('absent');
   const targetLetters = targetWord.split('');
   const guessLetters = guess.split('');
   
   // First pass: mark correct letters
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < wordLength; i++) {
     if (guessLetters[i] === targetLetters[i]) {
       result[i] = 'correct';
       targetLetters[i] = ''; // Mark as used
@@ -17,7 +18,7 @@ export const checkGuess = (guess: string, targetWord: string): LetterState[] => 
   }
   
   // Second pass: mark present letters
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < wordLength; i++) {
     if (guessLetters[i] && targetLetters.includes(guessLetters[i])) {
       result[i] = 'present';
       const targetIndex = targetLetters.indexOf(guessLetters[i]);

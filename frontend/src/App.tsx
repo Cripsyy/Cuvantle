@@ -3,74 +3,82 @@ import Header from './components/Header';
 import Board from './components/Board';
 import Keyboard from './components/Keyboard';
 import StatsModal from './components/StatsModal';
-import { GameState, Tile, GameStats } from './types/game';
-import { getRandomWord, isValidWord } from './utils/words';
+import SettingsModal from './components/SettingsModal';
+import LandingPage from './components/LandingPage';
+import { GameState, Tile, GameStats, GameSettings } from './types/game';
+import { getRandomWord, isValidWord, loadWordsFromFile } from './utils/words';
 import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost } from './utils/gameLogic';
 import { getStoredStats, saveStats, updateStats } from './utils/stats';
-
-const WORD_LENGTH = 5;
-const MAX_GUESSES = 6;
+import { getStoredSettings, saveSettings, getMaxGuesses } from './utils/settings';
 
 const createEmptyTile = (): Tile => ({
   letter: '',
   state: 'empty'
 });
 
-const createEmptyBoard = (): Tile[][] => {
-  return Array(MAX_GUESSES).fill(null).map(() => 
-    Array(WORD_LENGTH).fill(null).map(() => createEmptyTile())
+const createEmptyBoard = (wordLength: number, maxGuesses: number): Tile[][] => {
+  return Array(maxGuesses).fill(null).map(() => 
+    Array(wordLength).fill(null).map(() => createEmptyTile())
   );
 };
 
 const App: React.FC = () => {
+  const [settings, setSettings] = useState<GameSettings>(() => getStoredSettings());
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
   const [shakingRow, setShakingRow] = useState<number | undefined>();
   const [message, setMessage] = useState<string>('');
   const [showStatsModal, setShowStatsModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [stats, setStats] = useState<GameStats>(() => getStoredStats());
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check localStorage for saved preference
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
-
-  // Ensure words are loaded before initializing the game
-  useEffect(() => {
-    let isMounted = true;
-    import('./utils/words').then(wordsModule => {
-      wordsModule.loadWordsFromFile().then(() => {
-        if (isMounted) {
-          setGameState({
-            board: createEmptyBoard(),
-            currentRow: 0,
-            currentCol: 0,
-            gameStatus: 'playing',
-            targetWord: wordsModule.getRandomWord(),
-            guesses: [],
-            keyboardLetters: {}
-          });
-          setIsLoading(false);
-        }
-      });
-    });
-    return () => { isMounted = false; };
-  }, []);
+  const [showLandingPage, setShowLandingPage] = useState(true);
 
   // Apply dark mode to document
   useEffect(() => {
-    if (isDarkMode) {
+    if (settings.isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-    // Save preference to localStorage
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-  }, [isDarkMode]);
+  }, [settings.isDarkMode]);
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
+  const startNewGame = async (wordLength: number) => {
+    setIsLoading(true);
+    try {
+      await loadWordsFromFile(wordLength);
+      const maxGuesses = getMaxGuesses(wordLength);
+      
+      setGameState({
+        board: createEmptyBoard(wordLength, maxGuesses),
+        currentRow: 0,
+        currentCol: 0,
+        gameStatus: 'playing',
+        targetWord: getRandomWord(wordLength),
+        guesses: [],
+        keyboardLetters: {}
+      });
+      setMessage('');
+      setShowLandingPage(false);
+    } catch (error) {
+      console.error('Failed to start new game:', error);
+      setMessage('Eroare la încărcarea cuvintelor!');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleWordLengthChange = (wordLength: number) => {
+    const newSettings = { ...settings, wordLength };
+    setSettings(newSettings);
+    saveSettings(newSettings);
+    startNewGame(wordLength); // Start new game with the new length immediately
+    setShowSettingsModal(false); // Close settings modal after changing length
+  };
+
+  const handleSettingsChange = (newSettings: GameSettings) => {
+    setSettings(newSettings);
+    saveSettings(newSettings);
   };
 
   const showMessage = (msg: string, duration: number = 2000) => {
@@ -93,7 +101,7 @@ const App: React.FC = () => {
   }, [gameState?.gameStatus, gameState?.currentRow, gameState?.currentCol, isRevealing]);
 
   const handleLetterInput = (letter: string) => {
-    if (!gameState || gameState.currentCol >= WORD_LENGTH) return;
+    if (!gameState || gameState.currentCol >= settings.wordLength) return;
 
     setGameState(prevState => {
       if (!prevState) return prevState;
@@ -129,7 +137,7 @@ const App: React.FC = () => {
 
   const handleSubmitGuess = () => {
     if (!gameState) return;
-    if (gameState.currentCol !== WORD_LENGTH) {
+    if (gameState.currentCol !== settings.wordLength) {
       showMessage('Nu ai suficiente litere!');
       setShakingRow(gameState.currentRow);
       setTimeout(() => setShakingRow(undefined), 500);
@@ -140,7 +148,7 @@ const App: React.FC = () => {
       .map(tile => tile.letter)
       .join('');
 
-    if (!isValidWord(currentGuess)) {
+    if (!isValidWord(currentGuess, settings.wordLength)) {
       showMessage('Cuvântul nu există în dicționar!');
       setShakingRow(gameState.currentRow);
       setTimeout(() => setShakingRow(undefined), 500);
@@ -157,7 +165,7 @@ const App: React.FC = () => {
       const newGuesses = [...prevState.guesses, currentGuess];
       
       // Update the board with the guess states
-      for (let i = 0; i < WORD_LENGTH; i++) {
+      for (let i = 0; i < settings.wordLength; i++) {
         newBoard[prevState.currentRow][i].state = guessStates[i];
       }
 
@@ -167,8 +175,9 @@ const App: React.FC = () => {
         guessStates
       );
 
+      const maxGuesses = getMaxGuesses(settings.wordLength);
       const won = isGameWon(newBoard, prevState.currentRow + 1);
-      const lost = isGameLost(prevState.currentRow + 1, MAX_GUESSES);
+      const lost = isGameLost(prevState.currentRow + 1, maxGuesses);
 
       let newGameStatus: 'playing' | 'won' | 'lost' = 'playing';
       if (won) {
@@ -211,26 +220,22 @@ const App: React.FC = () => {
 
     // Start the revealing animation after state update
     setIsRevealing(true);
-    // Each tile has 100ms delay, last tile starts at 400ms + 600ms animation = 1000ms total
-    setTimeout(() => setIsRevealing(false), 1000);
+    // Each tile has 100ms delay, last tile starts at (wordLength-1)*100ms + 600ms animation
+    setTimeout(() => setIsRevealing(false), settings.wordLength * 100 + 600);
   };
 
   const resetGame = () => {
-    import('./utils/words').then(wordsModule => {
-      wordsModule.loadWordsFromFile().then(() => {
-        setGameState({
-          board: createEmptyBoard(),
-          currentRow: 0,
-          currentCol: 0,
-          gameStatus: 'playing',
-          targetWord: wordsModule.getRandomWord(),
-          guesses: [],
-          keyboardLetters: {}
-        });
-        setMessage('');
-        setShowStatsModal(false);
-      });
-    });
+    startNewGame(settings.wordLength);
+    setShowStatsModal(false);
+    setShowSettingsModal(false);
+  };
+
+  const backToMenu = () => {
+    setShowLandingPage(true);
+    setGameState(null);
+    setMessage('');
+    setShowStatsModal(false);
+    setShowSettingsModal(false);
   };
 
   // Romanian character mapping for keyboard input
@@ -270,10 +275,24 @@ const App: React.FC = () => {
     setShowStatsModal(true);
   };
 
-  const handleHelpClick = () => {
-    // TODO: Implement help modal
-    showMessage('Ghici cuvântul românesc de 5 litere în 6 încercări! Pentru diacritice: [ = ă, ] = î, \\ = â, ; = ș, \' = ț', 4000);
+  const handleSettingsClick = () => {
+    setShowSettingsModal(true);
   };
+
+  const handleHelpClick = () => {
+    showMessage(`Ghici cuvântul românesc de ${settings.wordLength} litere în ${getMaxGuesses(settings.wordLength)} încercări! Pentru diacritice: [ = ă, ] = î, \\ = â, ; = ș, ' = ț`, 4000);
+  };
+
+  // Show landing page if no game started
+  if (showLandingPage) {
+    return (
+      <LandingPage 
+        onWordLengthSelect={handleWordLengthChange}
+        isDarkMode={settings.isDarkMode}
+        onDarkModeToggle={() => handleSettingsChange({ ...settings, isDarkMode: !settings.isDarkMode })}
+      />
+    );
+  }
 
   if (isLoading || !gameState) {
     return (
@@ -288,8 +307,8 @@ const App: React.FC = () => {
       <Header 
         onStatsClick={handleStatsClick} 
         onHelpClick={handleHelpClick}
-        isDarkMode={isDarkMode}
-        onDarkModeToggle={toggleDarkMode}
+        onSettingsClick={handleSettingsClick}
+        onBackToMenu={backToMenu}
       />
       
       <main className="flex flex-col items-center justify-center flex-1 py-8">
@@ -329,6 +348,15 @@ const App: React.FC = () => {
         isOpen={showStatsModal}
         onClose={() => setShowStatsModal(false)}
         stats={stats}
+      />
+      
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        settings={settings}
+        onSettingsChange={handleSettingsChange}
+        onNewGame={resetGame}
+        onWordLengthChange={handleWordLengthChange}
       />
     </div>
   );

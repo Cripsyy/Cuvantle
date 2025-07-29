@@ -72,10 +72,8 @@ venv/
 env/
 
 # Generated word files (these can be regenerated)
-romanian_5_letter_words.txt
-copy_words.py
-.pytest_cache/
-cover/
+romanian_*_letter_words.txt
+
 
 # Translations
 *.mo
