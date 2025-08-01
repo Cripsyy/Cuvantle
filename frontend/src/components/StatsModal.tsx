@@ -102,7 +102,7 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, stats}) => {
                     <div key={wordLength} className="flex flex-row items-center w-full gap-2">
                       <div className="w-6 text-sm font-medium text-right text-gray-900 dark:text-gray-100">{wordLength}</div>
                       <div
-                        className="bg-blue-600 dark:bg-blue-500 rounded transition-all duration-300 min-w-[4px] h-6"
+                        className="bg-green-600 dark:bg-green-500 rounded transition-all duration-300 min-w-[4px] h-6"
                         style={{
                           width: maxGamesForLength > 0 ? `${Math.max((gamesPlayed / maxGamesForLength) * 80, gamesPlayed > 0 ? 8 : 2)}%` : '8px'
                         }}
