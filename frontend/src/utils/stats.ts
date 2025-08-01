@@ -6,7 +6,16 @@ export const getStoredStats = (): GameStats => {
   try {
     const stored = localStorage.getItem(STATS_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsedStats = JSON.parse(stored);
+      // Ensure backward compatibility by adding missing fields
+      return {
+        gamesPlayed: parsedStats.gamesPlayed || 0,
+        gamesWon: parsedStats.gamesWon || 0,
+        currentStreak: parsedStats.currentStreak || 0,
+        maxStreak: parsedStats.maxStreak || 0,
+        guessDistribution: parsedStats.guessDistribution || [0, 0, 0, 0, 0, 0],
+        gamesPlayedByLength: parsedStats.gamesPlayedByLength || {}
+      };
     }
   } catch (error) {
     console.error('Error loading stats:', error);
@@ -18,7 +27,8 @@ export const getStoredStats = (): GameStats => {
     gamesWon: 0,
     currentStreak: 0,
     maxStreak: 0,
-    guessDistribution: [0, 0, 0, 0, 0, 0] // Index 0 = 1 guess, Index 5 = 6 guesses
+    guessDistribution: [0, 0, 0, 0, 0, 0], // Index 0 = 1 guess, Index 5 = 6 guesses
+    gamesPlayedByLength: {} // wordLength -> number of games played
   };
 };
 
@@ -30,7 +40,7 @@ export const saveStats = (stats: GameStats): void => {
   }
 };
 
-export const updateStats = (currentStats: GameStats, gameWon: boolean, guessCount: number): GameStats => {
+export const updateStats = (currentStats: GameStats, gameWon: boolean, guessCount: number, wordLength: number): GameStats => {
   const newStats = {
     ...currentStats,
     gamesPlayed: currentStats.gamesPlayed + 1,
@@ -39,13 +49,17 @@ export const updateStats = (currentStats: GameStats, gameWon: boolean, guessCoun
     maxStreak: gameWon 
       ? Math.max(currentStats.maxStreak, currentStats.currentStreak + 1)
       : currentStats.maxStreak,
-    guessDistribution: [...currentStats.guessDistribution]
+    guessDistribution: [...currentStats.guessDistribution],
+    gamesPlayedByLength: { ...currentStats.gamesPlayedByLength }
   };
 
   // Update guess distribution if the game was won
   if (gameWon && guessCount >= 1 && guessCount <= 6) {
     newStats.guessDistribution[guessCount - 1]++;
   }
+
+  // Update games played by word length
+  newStats.gamesPlayedByLength[wordLength] = (newStats.gamesPlayedByLength[wordLength] || 0) + 1;
 
   return newStats;
 };
@@ -68,4 +82,19 @@ export const getAverageGuesses = (stats: GameStats): number => {
   }
   
   return totalWins > 0 ? Math.round((totalGuesses / totalWins) * 10) / 10 : 0;
+};
+
+export const getGamesPlayedByWordLength = (stats: GameStats): Record<number, number> => {
+  // Ensure backward compatibility with old stats that might not have this field
+  return stats.gamesPlayedByLength || {};
+};
+
+export const getFormattedGamesPlayedByLength = (stats: GameStats): Array<{ wordLength: number; gamesPlayed: number }> => {
+  const gamesPlayedByLength = getGamesPlayedByWordLength(stats);
+  return Object.entries(gamesPlayedByLength)
+    .map(([length, count]) => ({
+      wordLength: parseInt(length),
+      gamesPlayed: count
+    }))
+    .sort((a, b) => a.wordLength - b.wordLength); // Sort by word length ascending
 };

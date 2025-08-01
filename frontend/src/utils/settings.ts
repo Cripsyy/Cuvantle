@@ -27,10 +27,3 @@ export const saveSettings = (settings: GameSettings): void => {
     console.warn('Failed to save settings:', error);
   }
 };
-
-export const getMaxGuesses = (wordLength: number): number => {
-  // More guesses for longer words
-  if (wordLength <= 4) return 5;
-  if (wordLength <= 6) return 6;
-  return 7;
-};

@@ -8,12 +8,7 @@ interface KeyProps {
   isLarge?: boolean;
 }
 
-const Key: React.FC<KeyProps> = ({ value, state, onClick, isLarge = false }) => {
-  // Debug log for key states
-  if (state && state !== 'empty' && state !== 'tbd') {
-    console.log(`Key ${value} has state: ${state}`);
-  }
-  
+const Key: React.FC<KeyProps> = ({ value, state, onClick, isLarge = false }) => {  
   const getKeyClasses = () => {
     let classes = 'key';
     
@@ -27,22 +22,18 @@ const Key: React.FC<KeyProps> = ({ value, state, onClick, isLarge = false }) => 
   };
 
   const getKeyStyle = (): React.CSSProperties => {
-    const baseStyle: React.CSSProperties = {};
-    
+    const baseStyle: React.CSSProperties = {
+      color: 'white', // Set once for all states
+    };
+
     if (state === 'correct') {
       baseStyle.backgroundColor = '#6aaa64';
-      baseStyle.color = 'white';
-      console.log(`Setting ${value} to correct (green) style`);
     } else if (state === 'present') {
       baseStyle.backgroundColor = '#c9b458';
-      baseStyle.color = 'white';
-      console.log(`Setting ${value} to present (yellow) style`);
     } else if (state === 'absent') {
       baseStyle.backgroundColor = '#505060';
-      baseStyle.color = 'white';
-      console.log(`Setting ${value} to absent (dark gray) style`);
     }
-    
+
     return baseStyle;
   };
 
@@ -81,11 +72,7 @@ interface KeyboardProps {
   keyboardLetters: Record<string, LetterState>;
 }
 
-const Keyboard: React.FC<KeyboardProps> = ({ onKeyPress, keyboardLetters }) => {
-  // Debug log to check keyboard letters state
-  console.log('Keyboard received keyboardLetters:', keyboardLetters);
-  
-  // Authentic Romanian keyboard layout
+const Keyboard: React.FC<KeyboardProps> = ({ onKeyPress, keyboardLetters }) => {  
   const firstRow = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'ă', 'î', 'â'];
   const secondRow = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ș', 'ț'];
   const thirdRow = ['z', 'x', 'c', 'v', 'b', 'n', 'm'];

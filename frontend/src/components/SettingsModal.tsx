@@ -6,7 +6,6 @@ interface SettingsModalProps {
   onClose: () => void;
   settings: GameSettings;
   onSettingsChange: (settings: GameSettings) => void;
-  onNewGame: () => void;
   onWordLengthChange?: (newLength: number) => void;
 }
 
@@ -15,7 +14,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose, 
   settings, 
   onSettingsChange,
-  onNewGame,
   onWordLengthChange
 }) => {
   if (!isOpen) return null;
@@ -28,7 +26,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         onWordLengthChange(newLength); // Use the specialized handler
       } else {
         onSettingsChange({ ...settings, wordLength: newLength });
-        onNewGame(); // Fallback to old behavior
       }
     }
   };

@@ -9,7 +9,9 @@ import { GameState, Tile, GameStats, GameSettings } from './types/game';
 import { getRandomWord, isValidWord, loadWordsFromFile } from './utils/words';
 import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost } from './utils/gameLogic';
 import { getStoredStats, saveStats, updateStats } from './utils/stats';
-import { getStoredSettings, saveSettings, getMaxGuesses } from './utils/settings';
+import { getStoredSettings, saveSettings} from './utils/settings';
+
+const maxGuesses = 6;
 
 const createEmptyTile = (): Tile => ({
   letter: '',
@@ -45,9 +47,10 @@ const App: React.FC = () => {
 
   const startNewGame = async (wordLength: number) => {
     setIsLoading(true);
+    setShowStatsModal(false);
+    setShowSettingsModal(false);
     try {
       await loadWordsFromFile(wordLength);
-      const maxGuesses = getMaxGuesses(wordLength);
       
       setGameState({
         board: createEmptyBoard(wordLength, maxGuesses),
@@ -63,9 +66,8 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Failed to start new game:', error);
       setMessage('Eroare la încărcarea cuvintelor!');
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   const handleWordLengthChange = (wordLength: number) => {
@@ -175,7 +177,6 @@ const App: React.FC = () => {
         guessStates
       );
 
-      const maxGuesses = getMaxGuesses(settings.wordLength);
       const won = isGameWon(newBoard, prevState.currentRow + 1);
       const lost = isGameLost(prevState.currentRow + 1, maxGuesses);
 
@@ -191,7 +192,7 @@ const App: React.FC = () => {
         if (won) {
           showMessage('Felicitări! Ai ghicit cuvântul!', 5000);
           // Update stats for win
-          const newStats = updateStats(stats, true, prevState.currentRow + 1);
+          const newStats = updateStats(stats, true, prevState.currentRow + 1, settings.wordLength);
           setStats(newStats);
           saveStats(newStats);
           // Show stats modal after a delay
@@ -199,7 +200,7 @@ const App: React.FC = () => {
         } else if (lost) {
           showMessage(`Cuvântul era: ${gameState.targetWord.toUpperCase()}`, 5000);
           // Update stats for loss
-          const newStats = updateStats(stats, false, 0);
+          const newStats = updateStats(stats, false, 0, settings.wordLength);
           setStats(newStats);
           saveStats(newStats);
           // Show stats modal after a delay
@@ -222,12 +223,6 @@ const App: React.FC = () => {
     setIsRevealing(true);
     // Each tile has 100ms delay, last tile starts at (wordLength-1)*100ms + 600ms animation
     setTimeout(() => setIsRevealing(false), settings.wordLength * 100 + 600);
-  };
-
-  const resetGame = () => {
-    startNewGame(settings.wordLength);
-    setShowStatsModal(false);
-    setShowSettingsModal(false);
   };
 
   const backToMenu = () => {
@@ -280,7 +275,7 @@ const App: React.FC = () => {
   };
 
   const handleHelpClick = () => {
-    showMessage(`Ghici cuvântul românesc de ${settings.wordLength} litere în ${getMaxGuesses(settings.wordLength)} încercări! Pentru diacritice: [ = ă, ] = î, \\ = â, ; = ș, ' = ț`, 4000);
+    showMessage(`Ghici cuvântul românesc de ${settings.wordLength} litere în ${maxGuesses} încercări! Pentru diacritice: [ = ă, ] = î, \\ = â, ; = ș, ' = ț`, 4000);
   };
 
   // Show landing page if no game started
@@ -336,7 +331,7 @@ const App: React.FC = () => {
         
         {(gameState.gameStatus === 'won' || gameState.gameStatus === 'lost') && (
           <button
-            onClick={resetGame}
+            onClick={startNewGame.bind(null, settings.wordLength)}
             className="px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
           >
             Joc Nou
@@ -355,7 +350,6 @@ const App: React.FC = () => {
         onClose={() => setShowSettingsModal(false)}
         settings={settings}
         onSettingsChange={handleSettingsChange}
-        onNewGame={resetGame}
         onWordLengthChange={handleWordLengthChange}
       />
     </div>

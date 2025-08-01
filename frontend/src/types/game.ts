@@ -21,6 +21,7 @@ export interface GameStats {
   currentStreak: number;
   maxStreak: number;
   guessDistribution: number[];
+  gamesPlayedByLength: Record<number, number>; // wordLength -> number of games played
 }
 
 export interface GameSettings {
