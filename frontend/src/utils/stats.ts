@@ -6,16 +6,7 @@ export const getStoredStats = (): GameStats => {
   try {
     const stored = localStorage.getItem(STATS_KEY);
     if (stored) {
-      const parsedStats = JSON.parse(stored);
-      // Ensure backward compatibility by adding missing fields
-      return {
-        gamesPlayed: parsedStats.gamesPlayed || 0,
-        gamesWon: parsedStats.gamesWon || 0,
-        currentStreak: parsedStats.currentStreak || 0,
-        maxStreak: parsedStats.maxStreak || 0,
-        guessDistribution: parsedStats.guessDistribution || [0, 0, 0, 0, 0, 0],
-        gamesPlayedByLength: parsedStats.gamesPlayedByLength || {}
-      };
+      return JSON.parse(stored);
     }
   } catch (error) {
     console.error('Error loading stats:', error);
@@ -84,13 +75,8 @@ export const getAverageGuesses = (stats: GameStats): number => {
   return totalWins > 0 ? Math.round((totalGuesses / totalWins) * 10) / 10 : 0;
 };
 
-export const getGamesPlayedByWordLength = (stats: GameStats): Record<number, number> => {
-  // Ensure backward compatibility with old stats that might not have this field
-  return stats.gamesPlayedByLength || {};
-};
-
-export const getFormattedGamesPlayedByLength = (stats: GameStats): Array<{ wordLength: number; gamesPlayed: number }> => {
-  const gamesPlayedByLength = getGamesPlayedByWordLength(stats);
+export const getGamesPlayedByLength = (stats: GameStats): Array<{ wordLength: number; gamesPlayed: number }> => {
+  const gamesPlayedByLength = stats.gamesPlayedByLength;
   return Object.entries(gamesPlayedByLength)
     .map(([length, count]) => ({
       wordLength: parseInt(length),

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { GameStats } from '../types/game';
-import { getWinPercentage, getAverageGuesses, getFormattedGamesPlayedByLength } from '../utils/stats';
+import { getWinPercentage, getAverageGuesses, getGamesPlayedByLength } from '../utils/stats';
 
 interface StatsModalProps {
   isOpen: boolean;
@@ -13,7 +13,7 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, stats}) => {
 
   const winPercentage = getWinPercentage(stats);
   const averageGuesses = getAverageGuesses(stats);
-  const gamesPlayedByLength = getFormattedGamesPlayedByLength(stats);
+  const gamesPlayedByLength = getGamesPlayedByLength(stats);
 
   if (!isOpen) return null;
 
