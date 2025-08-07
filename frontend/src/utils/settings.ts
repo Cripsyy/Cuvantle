@@ -4,7 +4,8 @@ const SETTINGS_STORAGE_KEY = 'cuvantle-settings';
 
 const DEFAULT_SETTINGS: GameSettings = {
   wordLength: 5,
-  isDarkMode: false
+  isDarkMode: false,
+  isHardMode: false
 };
 
 export const getStoredSettings = (): GameSettings => {

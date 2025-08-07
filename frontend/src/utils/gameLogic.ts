@@ -74,3 +74,52 @@ export const isGameWon = (board: Tile[][], currentRow: number): boolean => {
 export const isGameLost = (currentRow: number, maxRows: number): boolean => {
   return currentRow >= maxRows;
 };
+
+export const validateHardModeGuess = (
+  guess: string,
+  previousGuesses: string[],
+  targetWord: string
+): { isValid: boolean; errorMessage?: string } => {
+  if (previousGuesses.length === 0) {
+    return { isValid: true };
+  }
+
+  // Get all revealed hints from previous guesses
+  const revealedCorrect: { [position: number]: string } = {};
+  const revealedPresent: Set<string> = new Set();
+
+  for (const prevGuess of previousGuesses) {
+    const states = checkGuess(prevGuess, targetWord);
+    
+    for (let i = 0; i < prevGuess.length; i++) {
+      if (states[i] === 'correct') {
+        revealedCorrect[i] = prevGuess[i];
+      } else if (states[i] === 'present') {
+        revealedPresent.add(prevGuess[i]);
+      }
+    }
+  }
+
+  // Check if all green letters are in correct positions
+  for (const [position, letter] of Object.entries(revealedCorrect)) {
+    const pos = parseInt(position);
+    if (guess[pos] !== letter) {
+      return {
+        isValid: false,
+        errorMessage: `Litera ${letter.toUpperCase()} trebuie să fie pe poziția ${pos + 1}`
+      };
+    }
+  }
+
+  // Check if all yellow letters are used somewhere
+  for (const letter of revealedPresent) {
+    if (!guess.includes(letter)) {
+      return {
+        isValid: false,
+        errorMessage: `Trebuie să folosești litera ${letter.toUpperCase()}`
+      };
+    }
+  }
+
+  return { isValid: true };
+};

@@ -1,5 +1,6 @@
 import React from 'react';
 import { GameSettings } from '../types/game';
+import { resetStats } from '../utils/stats';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface SettingsModalProps {
   settings: GameSettings;
   onSettingsChange: (settings: GameSettings) => void;
   onWordLengthChange?: (newLength: number) => void;
+  onStatsReset?: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
@@ -14,7 +16,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose, 
   settings, 
   onSettingsChange,
-  onWordLengthChange
+  onWordLengthChange,
+  onStatsReset
 }) => {
   if (!isOpen) return null;
 
@@ -32,6 +35,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleDarkModeToggle = () => {
     onSettingsChange({ ...settings, isDarkMode: !settings.isDarkMode });
+  };
+
+  const handleHardModeToggle = () => {
+    onSettingsChange({ ...settings, isHardMode: !settings.isHardMode });
+  };
+
+  const handleResetStats = () => {
+    if (window.confirm('Ești sigur că vrei să resetezi toate statisticile? Această acțiune nu poate fi anulată.')) {
+      resetStats();
+      if (onStatsReset) {
+        onStatsReset();
+      }
+    }
   };
 
   const getDifficultyLabel = (length: number): string => {
@@ -61,10 +77,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        {/* Theme Toggle */}
-        <div className="mb-6">
-          <h3 className="mb-3 text-lg font-semibold">Temă</h3>
-          <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+
+        <div className="p-3 mb-6 rounded-lg bg-gray-50 dark:bg-gray-700">
+          {/* Theme Toggle */}
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {settings.isDarkMode ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,6 +104,58 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   settings.isDarkMode ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
+            </button>
+          </div>
+          
+          <hr className="my-4 border-gray-400 border-t-1 dark:border-gray-500" />
+
+          {/* Hard Mode Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <div>
+                <span>Mod greu</span>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Toate indiciile revelate trebuie folosite
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleHardModeToggle}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                settings.isHardMode ? 'bg-blue-600' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.isHardMode ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+          
+          <hr className="my-4 border-gray-400 border-t-1 dark:border-gray-500" />
+
+          {/* Reset Stats */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <div>
+                <span>Resetează statisticile</span>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Șterge toate statisticile salvate
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleResetStats}
+              className="px-4 py-2 text-sm font-medium text-white transition-colors bg-red-600 rounded-lg hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+            >
+              Resetează
             </button>
           </div>
         </div>

@@ -8,7 +8,7 @@ import SettingsModal from '../components/SettingsModal';
 import HelpModal from '../components/HelpModal';
 import { GameState, Tile, GameStats, GameSettings } from '../types/game';
 import { getRandomWord, isValidWord, loadWordsFromFile } from '../utils/words';
-import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost } from '../utils/gameLogic';
+import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost, validateHardModeGuess } from '../utils/gameLogic';
 import { getStoredStats, saveStats, updateStats } from '../utils/stats';
 import { getStoredSettings, saveSettings} from '../utils/settings';
 import { analyzeGame, GameAnalysis } from '../utils/analysis';
@@ -100,10 +100,17 @@ const Game: React.FC = () => {
     saveSettings(newSettings);
   };
 
-  const showMessage = (msg: string, duration: number = 2000) => {
-    setMessage(msg);
-    setTimeout(() => setMessage(''), duration);
+  const handleStatsReset = () => {
+    const newStats = getStoredStats(); // This will return the reset stats from resetStats function
+    setStats(newStats);
   };
+
+ const showMessage = (msg: string, duration: number = 2000) => {
+  setMessage(msg);
+  if (isFinite(duration)) {
+    setTimeout(() => setMessage(''), duration);
+  }
+};
 
   const handleKeyPress = useCallback((key: string) => {
     if (!gameState || gameState.gameStatus !== 'playing' || isRevealing) {
@@ -174,6 +181,22 @@ const Game: React.FC = () => {
       return;
     }
 
+    // Hard mode validation
+    if (settings.isHardMode) {
+      const hardModeValidation = validateHardModeGuess(
+        currentGuess,
+        gameState.guesses,
+        gameState.targetWord
+      );
+      
+      if (!hardModeValidation.isValid) {
+        showMessage(hardModeValidation.errorMessage || 'Încălcare regulă mod greu!');
+        setShakingRow(gameState.currentRow);
+        setTimeout(() => setShakingRow(undefined), 500);
+        return;
+      }
+    }
+
     // Calculate the guess states immediately
     const guessStates = checkGuess(currentGuess, gameState.targetWord);
     
@@ -218,7 +241,7 @@ const Game: React.FC = () => {
           // Show stats modal after a delay
           setTimeout(() => setShowStatsModal(true), 2000);
         } else if (lost) {
-          showMessage(`Cuvântul era: ${gameState.targetWord.toUpperCase()}`, 5000);
+          showMessage(`Cuvântul era: ${gameState.targetWord.toUpperCase()}`, Infinity);
           // Update stats for loss
           const newStats = updateStats(stats, false, 0, settings.wordLength);
           setStats(newStats);
@@ -338,7 +361,7 @@ const Game: React.FC = () => {
         </div>
         
         {message && (
-          <div className="px-4 py-2 mb-4 text-center text-white bg-gray-800 rounded-md dark:bg-gray-700">
+          <div className="fixed z-50 px-4 py-2 text-center text-white transform -translate-x-1/2 bg-gray-800 rounded-md top-24 left-1/2 dark:bg-gray-700">
             {message}
           </div>
         )}
@@ -392,6 +415,7 @@ const Game: React.FC = () => {
         settings={settings}
         onSettingsChange={handleSettingsChange}
         onWordLengthChange={handleWordLengthChange}
+        onStatsReset={handleStatsReset}
       />
     </div>
   );

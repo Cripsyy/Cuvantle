@@ -84,3 +84,17 @@ export const getGamesPlayedByLength = (stats: GameStats): Array<{ wordLength: nu
     }))
     .sort((a, b) => a.wordLength - b.wordLength); // Sort by word length ascending
 };
+
+export const resetStats = (): GameStats => {
+  // Clear existing stats
+  const resetStats = {
+    gamesPlayed: 0,
+    gamesWon: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    guessDistribution: [0, 0, 0, 0, 0, 0],
+    gamesPlayedByLength: {}
+  };
+  saveStats(resetStats);
+  return resetStats;
+};

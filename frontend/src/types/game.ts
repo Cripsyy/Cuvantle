@@ -27,4 +27,5 @@ export interface GameStats {
 export interface GameSettings {
   wordLength: number;
   isDarkMode: boolean;
+  isHardMode: boolean;
 }
