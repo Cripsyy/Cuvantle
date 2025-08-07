@@ -5,6 +5,7 @@ import Board from '../components/Board';
 import Keyboard from '../components/Keyboard';
 import StatsModal from '../components/StatsModal';
 import SettingsModal from '../components/SettingsModal';
+import HelpModal from '../components/HelpModal';
 import { GameState, Tile, GameStats, GameSettings } from '../types/game';
 import { getRandomWord, isValidWord, loadWordsFromFile } from '../utils/words';
 import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost } from '../utils/gameLogic';
@@ -37,6 +38,7 @@ const Game: React.FC = () => {
   const [message, setMessage] = useState<string>('');
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [gameAnalysis, setGameAnalysis] = useState<GameAnalysis | null>(null);
   const [stats, setStats] = useState<GameStats>(() => getStoredStats());
 
@@ -67,6 +69,7 @@ const Game: React.FC = () => {
     setIsLoading(true);
     setShowStatsModal(false);
     setShowSettingsModal(false);
+    setShowHelpModal(false);
     setGameAnalysis(null);
     try {
       await loadWordsFromFile(wordLength);
@@ -304,7 +307,7 @@ const Game: React.FC = () => {
   };
 
   const handleHelpClick = () => {
-    showMessage(`Ghici cuvântul românesc de ${settings.wordLength} litere în ${maxGuesses} încercări! Pentru diacritice: [ = ă, ] = î, \\ = â, ; = ș, ' = ț`, 4000);
+    setShowHelpModal(true);
   };
 
   if (isLoading || !gameState) {
@@ -347,7 +350,7 @@ const Game: React.FC = () => {
           />
         </div>
         
-        {(gameState.gameStatus === 'won' || gameState.gameStatus === 'lost') && (
+        {(!showStatsModal && (gameState.gameStatus === 'won' || gameState.gameStatus === 'lost')) && (
           <div className="flex space-x-4">
             <button
               onClick={() => startNewGame(settings.wordLength)}
@@ -358,7 +361,7 @@ const Game: React.FC = () => {
             {gameAnalysis && (
               <button
                 onClick={handleAnalysisClick}
-                className="px-6 py-3 font-semibold text-blue-600 transition-colors bg-blue-100 border border-blue-600 rounded-lg dark:bg-blue-900 dark:text-blue-300 dark:border-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800"
+                className="px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
               >
                 CuvântleBot
               </button>
@@ -366,12 +369,22 @@ const Game: React.FC = () => {
           </div>
         )}
       </main>
+
+      <HelpModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+      />
       
       <StatsModal
         isOpen={showStatsModal}
         onClose={() => setShowStatsModal(false)}
         stats={stats}
-      />
+        gameState={gameState}
+        settings={settings}
+        gameAnalysis={gameAnalysis ?? undefined}
+        startNewGame={startNewGame}
+        handleAnalysisClick={handleAnalysisClick}
+      />  
       
       <SettingsModal
         isOpen={showSettingsModal}

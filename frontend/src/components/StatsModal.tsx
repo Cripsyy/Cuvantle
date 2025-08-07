@@ -1,14 +1,29 @@
 import React, { useState } from 'react';
-import { GameStats } from '../types/game';
+import { GameStats, GameState, GameSettings } from '../types/game';
 import { getWinPercentage, getAverageGuesses, getGamesPlayedByLength } from '../utils/stats';
+import { GameAnalysis } from '../utils/analysis';
 
 interface StatsModalProps {
   isOpen: boolean;
   onClose: () => void;
   stats: GameStats;
+  gameState: GameState;
+  settings: GameSettings;
+  gameAnalysis?: GameAnalysis;
+  startNewGame: (wordLength: number) => void;
+  handleAnalysisClick?: () => void;
 }
 
-const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, stats}) => {
+const StatsModal: React.FC<StatsModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  stats, 
+  gameState, 
+  settings, 
+  gameAnalysis, 
+  startNewGame, 
+  handleAnalysisClick 
+}) => {
   const [currentChart, setCurrentChart] = useState<'distribution' | 'wordLength'>('distribution');
 
   const winPercentage = getWinPercentage(stats);
@@ -167,6 +182,26 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, stats}) => {
             </button>
           </div>
         </div>
+
+        {/* New Game and Analysis Buttons */}
+        {(gameState.gameStatus === 'won' || gameState.gameStatus === 'lost') && (
+          <div className="flex justify-center space-x-4">
+            <button
+              onClick={() => startNewGame(settings.wordLength)}
+              className="px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
+            >
+              Joc Nou
+            </button>
+            {gameAnalysis && (
+              <button
+                onClick={handleAnalysisClick}
+                className="px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
+              >
+                CuvântleBot
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

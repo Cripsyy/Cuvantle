@@ -28,6 +28,13 @@
     height: clamp(40px, calc(100vw / 16), 56px);
     font-size: clamp(14px, calc(100vw / 25), 20px);
   }
+
+  .tile-sm {
+    @apply flex items-center justify-center font-bold uppercase transition-all duration-300 border-2 border-gray-300 dark:border-gray-600 text-base;
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
   
   /* Specific sizes for different word lengths on larger screens */
   @media (min-width: 640px) {

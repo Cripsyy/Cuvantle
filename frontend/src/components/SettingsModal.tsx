@@ -53,7 +53,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           <h2 className="text-xl font-bold">Setări</h2>
           <button
             onClick={onClose}
-            className="p-1 transition-colors rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="p-1 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
