@@ -5,9 +5,23 @@ interface HeaderProps {
   onHelpClick?: () => void;
   onSettingsClick?: () => void;
   onBackToMenu?: () => void;
+  isProgressiveMode?: boolean;
+  progressiveLevel?: number;
+  maxProgressiveLevel?: number; 
 }
 
-const Header: React.FC<HeaderProps> = ({ onStatsClick, onHelpClick, onSettingsClick, onBackToMenu }) => {
+const Header: React.FC<HeaderProps> = ({ 
+  onStatsClick, 
+  onHelpClick, 
+  onSettingsClick, 
+  onBackToMenu, 
+  isProgressiveMode,
+  progressiveLevel,
+  maxProgressiveLevel
+}) => {
+
+  const wordLengths = [3, 4, 5, 6, 7, 8, 9];
+
   return (
     <header className="py-4 border-b border-gray-300 dark:border-gray-600">
       <div className="container px-4 mx-auto">
@@ -35,8 +49,28 @@ const Header: React.FC<HeaderProps> = ({ onStatsClick, onHelpClick, onSettingsCl
             </button>
           </div>
           
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center justify-center">
             <h1 className="text-3xl font-bold">CUVÂNTLE</h1>
+            {isProgressiveMode && progressiveLevel && maxProgressiveLevel && (
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex justify-center mt-2">
+                  {wordLengths.map(level => (
+                    <div
+                      key={level}
+                      className={`w-4 h-4 mx-1 rounded-full border-2 ${
+                        level < progressiveLevel 
+                          ? 'bg-green-500 border-green-500'
+                          : level === progressiveLevel
+                          ? 'bg-blue-500 border-blue-500'
+                          : level <= maxProgressiveLevel
+                          ? 'bg-yellow-500 border-yellow-500'
+                          : 'bg-gray-300 border-gray-300 dark:bg-gray-600 dark:border-gray-600'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="flex items-center justify-end gap-2">

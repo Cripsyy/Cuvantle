@@ -6,7 +6,12 @@ export const getStoredStats = (): GameStats => {
   try {
     const stored = localStorage.getItem(STATS_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsedStats = JSON.parse(stored);
+      // Migration: ensure gamesPlayedByLength exists (for backwards compatibility)
+      if (!parsedStats.gamesPlayedByLength) {
+        parsedStats.gamesPlayedByLength = {};
+      }
+      return parsedStats;
     }
   } catch (error) {
     console.error('Error loading stats:', error);
@@ -41,7 +46,7 @@ export const updateStats = (currentStats: GameStats, gameWon: boolean, guessCoun
       ? Math.max(currentStats.maxStreak, currentStats.currentStreak + 1)
       : currentStats.maxStreak,
     guessDistribution: [...currentStats.guessDistribution],
-    gamesPlayedByLength: { ...currentStats.gamesPlayedByLength }
+    gamesPlayedByLength: { ...(currentStats.gamesPlayedByLength || {}) }
   };
 
   // Update guess distribution if the game was won
@@ -76,7 +81,7 @@ export const getAverageGuesses = (stats: GameStats): number => {
 };
 
 export const getGamesPlayedByLength = (stats: GameStats): Array<{ wordLength: number; gamesPlayed: number }> => {
-  const gamesPlayedByLength = stats.gamesPlayedByLength;
+  const gamesPlayedByLength = stats.gamesPlayedByLength || {};
   return Object.entries(gamesPlayedByLength)
     .map(([length, count]) => ({
       wordLength: parseInt(length),

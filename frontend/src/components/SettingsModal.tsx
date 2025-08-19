@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GameSettings } from '../types/game';
 import { resetStats } from '../utils/stats';
+import { getStoredProgressiveMode } from '../utils/progressiveMode';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -9,6 +11,8 @@ interface SettingsModalProps {
   onSettingsChange: (settings: GameSettings) => void;
   onWordLengthChange?: (newLength: number) => void;
   onStatsReset?: () => void;
+  onProgressiveModeStart?: () => void;
+  isProgressiveMode?: boolean;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
@@ -17,11 +21,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   settings, 
   onSettingsChange,
   onWordLengthChange,
-  onStatsReset
+  onStatsReset,
+  onProgressiveModeStart,
+  isProgressiveMode = false
 }) => {
   if (!isOpen) return null;
 
+  const navigate = useNavigate();
+
   const wordLengths = [3, 4, 5, 6, 7, 8, 9];
+  const [progressiveMode, setProgressiveMode] = useState(() => getStoredProgressiveMode());
 
   const handleWordLengthChange = (newLength: number) => {
     if (newLength !== settings.wordLength) {
@@ -47,6 +56,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       if (onStatsReset) {
         onStatsReset();
       }
+    }
+  };
+
+  const handleProgressiveModeStart = () => {
+    const newMode = {
+      ...progressiveMode,
+      isActive: true,
+      currentLevel: 3
+    };
+    setProgressiveMode(newMode);
+    if (onProgressiveModeStart) {
+      onProgressiveModeStart();
     }
   };
 
@@ -164,15 +185,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="mb-6">
           <h3 className="mb-3 text-lg font-semibold">Lungimea cuvântului</h3>
           <div className="grid grid-cols-2 gap-2">
+            {/* Word length buttons */}
             {wordLengths.map((length) => (
               <button
                 key={length}
                 onClick={() => handleWordLengthChange(length)}
+                disabled={isProgressiveMode}
                 className={`p-3 rounded-lg border-2 transition-all ${
-                  length === settings.wordLength
+                  !progressiveMode.isActive && length === settings.wordLength
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                }`}
+                } ${isProgressiveMode ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div className="font-semibold">{length} litere</div>
                 <div className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-semibold text-white ${getDifficultyColor(length)}`}>
@@ -180,10 +203,44 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </button>
             ))}
+            {/* Start progressive mode button */}
+            {onProgressiveModeStart && !isProgressiveMode && (
+              <button
+                onClick={handleProgressiveModeStart}
+                className={`p-3 rounded-lg border-2 transition-all border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700`}
+              >
+                <div className="font-semibold">Mod progresiv</div>
+                <div className={`inline-block px-2 py-1 mt-1 rounded-full text-xs font-semibold text-white bg-red-800 dark:bg-red-900`}>
+                  Foarte Greu
+                </div>
+              </button>
+            )}
+            {/* Back to normal mode button */}
+            {isProgressiveMode && (
+              <button
+                onClick={() => navigate('/game/')}
+                className={`p-3 rounded-lg border-2 transition-all border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500`}
+              >
+                <div className="flex items-center justify-center">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                  </svg>
+                  <span className="font-semibold">Înapoi la modul normal</span>
+                </div>
+
+              </button>
+            )}
           </div>
-          {settings.wordLength !== 5 && (
+
+          {!isProgressiveMode && (
             <p className="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
               ⚠️ Schimbarea lungimii va începe un joc nou
+            </p>
+          )}
+          
+          {isProgressiveMode && (
+            <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
+              ℹ️ Ești în modul progresiv. Nu poți schimba lungimea cuvântului.
             </p>
           )}
         </div>

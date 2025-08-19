@@ -43,7 +43,8 @@ const App: React.FC = () => {
             />
           } 
         />
-        <Route path="/game/:wordLength" element={<Game />} />
+        <Route path="/game/" element={<Game />} />
+        <Route path="/game/progressive" element={<Game />} />
         <Route path="/analysis" element={<Analysis />} />
       </Routes>
     </Router>

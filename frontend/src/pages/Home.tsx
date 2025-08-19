@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { startProgressiveMode, getStoredProgressiveMode, hasSavedGameState } from '../utils/progressiveMode';
+import { getStoredSettings, saveSettings } from '../utils/settings';
 
 interface HomeProps {
   isDarkMode: boolean;
@@ -8,9 +10,39 @@ interface HomeProps {
 
 const Home: React.FC<HomeProps> = ({ isDarkMode, onDarkModeToggle }) => {
   const navigate = useNavigate();
+  const [progressiveMode, setProgressiveMode] = useState(() => getStoredProgressiveMode());
 
   const handleWordLengthSelect = (length: number) => {
-    navigate(`/game/${length}`);
+    // Save the selected word length to settings before navigating
+    const currentSettings = getStoredSettings();
+    const newSettings = { ...currentSettings, wordLength: length };
+    saveSettings(newSettings);
+    navigate('/game/');
+  };
+
+  const handleProgressiveModeStart = () => {
+    const updatedMode = startProgressiveMode();
+    setProgressiveMode(updatedMode);
+    navigate('/game/progressive');
+  };
+
+  const handleProgressiveModeResume = () => {
+    navigate('/game/progressive');
+  };
+
+  const handleProgressiveModeClick = () => {
+    console.log('Progressive mode click - State:', progressiveMode);
+    console.log('Has saved game state:', hasSavedGameState(progressiveMode));
+    console.log('Current level:', progressiveMode.currentLevel);
+    console.log('Is active:', progressiveMode.isActive);
+    
+    if (progressiveMode.isActive && (progressiveMode.currentLevel > 3 || hasSavedGameState(progressiveMode))) {
+      // Continue existing game
+      handleProgressiveModeResume();
+    } else {
+      // Start new game
+      handleProgressiveModeStart();
+    }
   };
 
   const wordLengths = [3, 4, 5, 6, 7, 8, 9];
@@ -59,24 +91,40 @@ const Home: React.FC<HomeProps> = ({ isDarkMode, onDarkModeToggle }) => {
             Ghicește cuvintele românești! Alege lungimea cuvântului cu care vrei să începi.
           </p>
           
-          <div className="grid grid-cols-2 gap-4 mb-8 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 mb-8 md:grid-cols-4">
+            {/* Word Length Buttons */}
             {wordLengths.map((length) => (
               <button
                 key={length}
                 onClick={() => handleWordLengthSelect(length)}
-                className="relative p-6 transition-colors bg-gray-100 border-2 border-transparent rounded-lg dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-blue-500 dark:hover:border-blue-400 group"
+                className="relative flex flex-col items-center justify-center p-4 transition-colors bg-gray-100 border-2 border-transparent rounded-lg h-36 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-blue-500 dark:hover:border-blue-400 group"
               >
-                <div className="mb-2 text-2xl font-bold">{length} litere</div>
+                <div className="mb-1 text-xl font-bold">{length} Litere</div>
                 <div className={`inline-block px-2 py-1 rounded-full text-xs font-semibold text-white ${getDifficultyColor(length)}`}>
                   {getDifficultyLabel(length)}
                 </div>
-                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  {length <= 4 ? 'Perfect pentru început' : 
-                   length <= 6 ? 'Provocare moderată' : 
-                   'Pentru experți'}
-                </div>
               </button>
             ))}
+            
+            {/* Progressive Mode Button */}
+            <button
+              onClick={handleProgressiveModeClick}
+              className="relative flex flex-col items-center justify-center p-4 transition-colors bg-gray-100 border-2 border-transparent rounded-lg h-36 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-blue-500 dark:hover:border-blue-400 group"
+              title={progressiveMode.isActive && (progressiveMode.currentLevel > 3 || hasSavedGameState(progressiveMode))
+                ? `Continuă de la nivelul ${progressiveMode.currentLevel}` 
+                : "Începe cu 3 litere și progresează până la 9"}
+            >
+              <div className="mb-1 text-xl font-bold">Progresiv</div>
+              {progressiveMode.isActive && hasSavedGameState(progressiveMode) ? (
+                <div className="inline-block px-2 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full dark:bg-blue-700">
+                  Continuă - Nivel {progressiveMode.currentLevel}
+                </div>
+              ) : (
+                <div className="inline-block px-2 py-1 text-xs font-semibold text-white bg-red-800 rounded-full dark:bg-red-900">
+                  Foarte Greu
+                </div>
+              )}
+            </button>
           </div>
 
           <div className="text-sm text-gray-500 dark:text-gray-400">

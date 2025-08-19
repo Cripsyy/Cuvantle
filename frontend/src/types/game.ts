@@ -21,11 +21,18 @@ export interface GameStats {
   currentStreak: number;
   maxStreak: number;
   guessDistribution: number[];
-  gamesPlayedByLength: Record<number, number>; // wordLength -> number of games played
+  gamesPlayedByLength?: Record<number, number>; // wordLength -> number of games played (optional for backwards compatibility)
 }
 
 export interface GameSettings {
   wordLength: number;
   isDarkMode: boolean;
   isHardMode: boolean;
+}
+
+export interface ProgressiveMode {
+  isActive: boolean;
+  currentLevel: number;
+  maxLevelReached: number;
+  savedGameState?: GameState;
 }
