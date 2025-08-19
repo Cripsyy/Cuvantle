@@ -6,6 +6,7 @@ import Keyboard from '../components/Keyboard';
 import StatsModal from '../components/StatsModal';
 import SettingsModal from '../components/SettingsModal';
 import HelpModal from '../components/HelpModal';
+import EndGameButtons from '../components/EndGameButtons';
 import { GameState, Tile, GameStats, GameSettings, ProgressiveMode } from '../types/game';
 import { getRandomWord, isValidWord, loadWordsFromFile } from '../utils/words';
 import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost, validateHardModeGuess } from '../utils/gameLogic';
@@ -107,9 +108,25 @@ const Game: React.FC = () => {
 
   const restoreProgressiveGame = (progressiveMode: ProgressiveMode) => {
     if (progressiveMode.savedGameState) {
-      setGameState(progressiveMode.savedGameState);
-      setMessage('Jocul a fost restabilit!');
-      setTimeout(() => setMessage(''), 2000);
+      const loadAndRestore = async () => {
+        setIsLoading(true);
+        try {
+          // Load the word list for the current progressive level
+          await loadWordsFromFile(progressiveMode.currentLevel);
+          
+          setGameState(progressiveMode.savedGameState!);
+          setMessage('Jocul a fost restabilit!');
+          setTimeout(() => setMessage(''), 2000);
+        } catch (error) {
+          console.error('Failed to restore progressive game:', error);
+          setMessage('Eroare la încărcarea cuvintelor!');
+          // Fallback to starting a new progressive game
+          startNewProgressiveGame(progressiveMode.currentLevel);
+        }
+        setIsLoading(false);
+      };
+      
+      loadAndRestore();
     }
   };
 
@@ -223,6 +240,18 @@ const Game: React.FC = () => {
     } else {
       // Start a new game at the next level without navigating
       startNewProgressiveGame(newMode.currentLevel);
+    }
+    setShowStatsModal(false);
+  };
+
+  const resetProgressiveModeHandler = () => {
+    if (window.confirm('Ești sigur că vrei să resetezi modul progresiv? Vei începe din nou de la nivelul 3.')) {
+      const resetMode = resetProgressiveMode(progressiveMode);
+      setProgressiveMode(resetMode);
+      
+      // Start a new game at level 3
+      startNewProgressiveGame(3);
+      setShowStatsModal(false);
     }
   };
 
@@ -352,11 +381,16 @@ const Game: React.FC = () => {
       setTimeout(() => {
         if (won) {
           if (isProgressiveMode) {
-            showMessage('Felicitări! Treci la următorul nivel!', 3000);
-            // In progressive mode, progress to next level
-            setTimeout(() => {
-              progressToNextLevelHandler();
-            }, 2000);
+            showMessage('Felicitări! Ai ghicit cuvântul!', 5000);
+            // In progressive mode, update stats and show modal
+            const newStats = updateStats(stats, true, prevState.currentRow + 1, currentWordLength);
+            setStats(newStats);
+            saveStats(newStats);
+            // Analyze the game
+            const analysis = analyzeGame(newGuesses, prevState.targetWord, true, currentWordLength);
+            setGameAnalysis(analysis);
+            // Show stats modal with progressive mode options
+            setTimeout(() => setShowStatsModal(true), 2000);
           } else {
             showMessage('Felicitări! Ai ghicit cuvântul!', 5000);
             // Regular mode stats update
@@ -372,14 +406,15 @@ const Game: React.FC = () => {
         } else if (lost) {
           showMessage(`Cuvântul era: ${gameState.targetWord.toUpperCase()}`, Infinity);
           if (isProgressiveMode) {
-            // In progressive mode, reset to level 3
-            showMessage('Încearcă din nou de la început!', 5000);
-            setTimeout(() => {
-              const resetMode = resetProgressiveMode(progressiveMode);
-              setProgressiveMode(resetMode);
-              // Start a new game at level 3 without navigating
-              startNewProgressiveGame(3);
-            }, 3000);
+            // In progressive mode, update stats and show modal
+            const newStats = updateStats(stats, false, 0, currentWordLength);
+            setStats(newStats);
+            saveStats(newStats);
+            // Analyze the game
+            const analysis = analyzeGame(newGuesses, prevState.targetWord, false, currentWordLength);
+            setGameAnalysis(analysis);
+            // Show stats modal with reset option
+            setTimeout(() => setShowStatsModal(true), 2000);
           } else {
             // Update stats for loss
             const newStats = updateStats(stats, false, 0, currentWordLength);
@@ -529,49 +564,19 @@ const Game: React.FC = () => {
           />
         </div>
         
-        {(!showStatsModal && (gameState.gameStatus === 'won' || gameState.gameStatus === 'lost')) && (
-          <div className="flex space-x-4">
-            {!isProgressiveMode && (
-              <>
-                <button
-                  onClick={() => startNewGame(settings.wordLength)}
-                  className="px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
-                >
-                  Joc Nou
-                </button>
-                {gameAnalysis && (
-                  <button
-                    onClick={handleAnalysisClick}
-                    className="px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
-                  >
-                    CuvântleBot
-                  </button>
-                )}
-              </>
-            )}
-            {isProgressiveMode && gameState.gameStatus === 'won' && (
-              <button
-                onClick={progressToNextLevelHandler}
-                className="px-6 py-3 font-semibold text-white transition-colors bg-green-600 rounded-lg dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600"
-              >
-                Următorul Nivel ({progressiveMode.currentLevel + 1} litere)
-              </button>
-            )}
-            {isProgressiveMode && gameState.gameStatus === 'lost' && (
-              <button
-                onClick={() => {
-                  const resetMode = resetProgressiveMode(progressiveMode);
-                  setProgressiveMode(resetMode);
-                  // Start a new game at level 3 without navigating
-                  startNewProgressiveGame(3);
-                }}
-                className="px-6 py-3 font-semibold text-white transition-colors bg-red-600 rounded-lg dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600"
-              >
-                Reîncepe (3 litere)
-              </button>
-            )}
-          </div>
-        )}
+        <EndGameButtons
+          showStatsModal={showStatsModal}
+          isProgressiveMode={isProgressiveMode}
+          gameState={gameState}
+          settings={settings}
+          handleAnalysisClick={handleAnalysisClick}
+          progressiveMode={progressiveMode}
+          startNewGame={startNewGame}
+          gameAnalysis={gameAnalysis}
+          resetProgressiveMode={resetProgressiveModeHandler}
+          onProgressToNextLevel={progressToNextLevelHandler}
+          context="game"
+        />
       </main>
 
       <HelpModal
@@ -588,6 +593,10 @@ const Game: React.FC = () => {
         gameAnalysis={gameAnalysis ?? undefined}
         startNewGame={startNewGame}
         handleAnalysisClick={handleAnalysisClick}
+        isProgressiveMode={isProgressiveMode}
+        progressiveMode={progressiveMode}
+        onProgressToNextLevel={progressToNextLevelHandler}
+        onResetProgressiveMode={resetProgressiveModeHandler}
       />  
       
       <SettingsModal
