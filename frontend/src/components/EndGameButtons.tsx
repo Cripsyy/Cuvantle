@@ -43,6 +43,7 @@ const EndGameButtons: React.FC<EndGameButtonsProps> = ({
       <>
         {context === 'game' ? (
           <div className="flex space-x-4">
+            {/* New Game Button In Regular Mode*/}
             {!isProgressiveMode && (
               <button
                 onClick={() => startNewGame(settings.wordLength)}
@@ -51,7 +52,8 @@ const EndGameButtons: React.FC<EndGameButtonsProps> = ({
               Joc Nou
             </button>
             )}
-            {isProgressiveMode && progressiveMode && progressiveMode.currentLevel < 9 && (
+            {/* Progress to Next Level Button - only show if game was won and not at max level */}
+            {isProgressiveMode && progressiveMode && progressiveMode.currentLevel < 9 && gameState.gameStatus === 'won' && (
               <button
                 onClick={onProgressToNextLevel}
                 className="px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
@@ -59,6 +61,7 @@ const EndGameButtons: React.FC<EndGameButtonsProps> = ({
                 Nivelul Următor
               </button>
             )}
+            {/* Reset Progressive Mode Button */}
             {isProgressiveMode && progressiveMode && resetProgressiveMode && (
               <button
                 onClick={resetProgressiveMode}
@@ -67,6 +70,7 @@ const EndGameButtons: React.FC<EndGameButtonsProps> = ({
                 Restart
               </button>
             )}
+            {/* CuvantleBot Button */}
             <button
               onClick={gameAnalysis ? handleAnalysisClick : undefined}
               disabled={!gameAnalysis}
@@ -83,10 +87,10 @@ const EndGameButtons: React.FC<EndGameButtonsProps> = ({
           /* Modal context - show vertical layout with different styling */
           <div className="flex flex-col space-y-3">
             {/* Progress to Next Level Button - only show if game was won and not at max level */}
-            {isProgressiveMode && progressiveMode && progressiveMode.currentLevel < 9 && (
+            {isProgressiveMode && progressiveMode && progressiveMode.currentLevel < 9 && gameState.gameStatus === 'won' && (
               <button
                 onClick={onProgressToNextLevel}
-                className="px-6 py-3 font-semibold text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                className="px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
               >
                 <div className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,12 +100,11 @@ const EndGameButtons: React.FC<EndGameButtonsProps> = ({
                 </div>
               </button>
             )}
-            
             {/* Reset Progressive Mode Button */}
             {isProgressiveMode && progressiveMode && resetProgressiveMode && (
               <button
                 onClick={resetProgressiveMode}
-                className="px-6 py-3 font-semibold text-white transition-colors bg-orange-600 rounded-lg hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600"
+                className="px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600"
               >
                 <div className="flex items-center justify-center gap-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,7 +114,6 @@ const EndGameButtons: React.FC<EndGameButtonsProps> = ({
                 </div>
               </button>
             )}
-
             {/* New Game Button In Regular Mode*/}
             {!isProgressiveMode && (
               <button
@@ -121,7 +123,6 @@ const EndGameButtons: React.FC<EndGameButtonsProps> = ({
               Joc Nou
             </button>
             )}
-
             {/* CuvantleBot Button */}
             <button
               onClick={gameAnalysis && handleAnalysisClick ? handleAnalysisClick : undefined}

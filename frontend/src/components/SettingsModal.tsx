@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { GameSettings } from '../types/game';
 import { resetStats } from '../utils/stats';
 import { getStoredProgressiveMode } from '../utils/progressiveMode';
@@ -12,6 +11,7 @@ interface SettingsModalProps {
   onWordLengthChange?: (newLength: number) => void;
   onStatsReset?: () => void;
   onProgressiveModeStart?: () => void;
+  resetProgressiveMode?: () => void;
   isProgressiveMode?: boolean;
 }
 
@@ -23,14 +23,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onWordLengthChange,
   onStatsReset,
   onProgressiveModeStart,
+  resetProgressiveMode,
   isProgressiveMode = false
 }) => {
-  if (!isOpen) return null;
-
-  const navigate = useNavigate();
-
   const wordLengths = [3, 4, 5, 6, 7, 8, 9];
   const [progressiveMode, setProgressiveMode] = useState(() => getStoredProgressiveMode());
+
+  if (!isOpen) return null;
 
   const handleWordLengthChange = (newLength: number) => {
     if (newLength !== settings.wordLength) {
@@ -218,27 +217,24 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             {/* Back to normal mode button */}
             {isProgressiveMode && (
               <button
-                onClick={() => navigate('/game/')}
+                onClick={resetProgressiveMode}
                 className={`p-3 rounded-lg border-2 transition-all border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500`}
               >
-                <div className="flex items-center justify-center">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                <div className='flex items-center'>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  <span className="font-semibold">Înapoi la modul normal</span>
+                  <span className='font-semibold'>Resetează modul progresiv</span>
                 </div>
-
               </button>
             )}
           </div>
 
-          {!isProgressiveMode && (
+          {!isProgressiveMode ? (
             <p className="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
               ⚠️ Schimbarea lungimii va începe un joc nou
             </p>
-          )}
-          
-          {isProgressiveMode && (
+          ) : (
             <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
               ℹ️ Ești în modul progresiv. Nu poți schimba lungimea cuvântului.
             </p>

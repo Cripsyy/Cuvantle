@@ -110,12 +110,12 @@ const Home: React.FC<HomeProps> = ({ isDarkMode, onDarkModeToggle }) => {
             <button
               onClick={handleProgressiveModeClick}
               className="relative flex flex-col items-center justify-center p-4 transition-colors bg-gray-100 border-2 border-transparent rounded-lg h-36 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-blue-500 dark:hover:border-blue-400 group"
-              title={progressiveMode.isActive && (progressiveMode.currentLevel > 3 || hasSavedGameState(progressiveMode))
+              title={progressiveMode.isActive && (progressiveMode.currentLevel > 3 || progressiveMode.isActive)
                 ? `Continuă de la nivelul ${progressiveMode.currentLevel}` 
                 : "Începe cu 3 litere și progresează până la 9"}
             >
               <div className="mb-1 text-xl font-bold">Progresiv</div>
-              {progressiveMode.isActive && hasSavedGameState(progressiveMode) ? (
+              {progressiveMode.isActive ? (
                 <div className="inline-block px-2 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full dark:bg-blue-700">
                   Continuă - Nivel {progressiveMode.currentLevel}
                 </div>

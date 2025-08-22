@@ -114,7 +114,20 @@ const Game: React.FC = () => {
           // Load the word list for the current progressive level
           await loadWordsFromFile(progressiveMode.currentLevel);
           
-          setGameState(progressiveMode.savedGameState!);
+          const savedState = progressiveMode.savedGameState!;
+          setGameState(savedState);
+          
+          // If the game is completed, regenerate the analysis
+          if (savedState.gameStatus === 'won' || savedState.gameStatus === 'lost') {
+            const analysis = analyzeGame(
+              savedState.guesses, 
+              savedState.targetWord, 
+              savedState.gameStatus === 'won', 
+              progressiveMode.currentLevel
+            );
+            setGameAnalysis(analysis);
+          }
+          
           setMessage('Jocul a fost restabilit!');
           setTimeout(() => setMessage(''), 2000);
         } catch (error) {
@@ -186,11 +199,6 @@ const Game: React.FC = () => {
   };
 
   const handleWordLengthChange = (wordLength: number) => {
-    if (isProgressiveMode) {
-      // Can't change word length in progressive mode
-      showMessage('Nu poți schimba lungimea în modul progresiv!', 3000);
-      return;
-    }
     // Update settings with new word length, which will trigger a new game
     const newSettings = { ...settings, wordLength };
     setSettings(newSettings);
@@ -429,7 +437,7 @@ const Game: React.FC = () => {
         }
       }, 600);
 
-      return {
+      const finalState = {
         ...prevState,
         board: newBoard,
         currentRow: prevState.currentRow + 1,
@@ -438,6 +446,14 @@ const Game: React.FC = () => {
         guesses: newGuesses,
         keyboardLetters: newKeyboardLetters
       };
+
+      // Save progressive game state when game ends
+      if (isProgressiveMode && (newGameStatus === 'won' || newGameStatus === 'lost')) {
+        const updatedMode = saveProgressiveGameState(progressiveMode, finalState);
+        setProgressiveMode(updatedMode);
+      }
+
+      return finalState;
     });
 
     // Auto-save progressive mode game state
@@ -607,6 +623,7 @@ const Game: React.FC = () => {
         onWordLengthChange={handleWordLengthChange}
         onStatsReset={handleStatsReset}
         onProgressiveModeStart={!isProgressiveMode ? handleProgressiveModeStart : undefined}
+        resetProgressiveMode={resetProgressiveModeHandler}
         isProgressiveMode={isProgressiveMode}
       />
     </div>
