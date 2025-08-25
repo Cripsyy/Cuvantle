@@ -4,6 +4,7 @@ interface HeaderProps {
   onStatsClick?: () => void;
   onHelpClick?: () => void;
   onSettingsClick?: () => void;
+  onHintClick?: () => void;
   onBackToMenu?: () => void;
   isProgressiveMode?: boolean;
   progressiveLevel?: number;
@@ -13,7 +14,8 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ 
   onStatsClick, 
   onHelpClick, 
-  onSettingsClick, 
+  onSettingsClick,
+  onHintClick,
   onBackToMenu, 
   isProgressiveMode,
   progressiveLevel,
@@ -31,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="py-4 border-b border-gray-300 dark:border-gray-600">
-      <div className="container px-4 mx-auto">
+      <div className="container mx-auto">
         <div className="grid items-center grid-cols-3">
           <div className="flex justify-start">
             {onBackToMenu && (
@@ -45,15 +47,6 @@ const Header: React.FC<HeaderProps> = ({
                 </svg>
               </button>
             )}
-            <button 
-              onClick={onHelpClick}
-              className="p-2 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-              title="Ajutor"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
           </div>
           
           <div className="flex flex-col items-center justify-center">
@@ -81,6 +74,27 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           
           <div className="flex items-center justify-end gap-2">
+            <button 
+              onClick={onHelpClick}
+              className="p-2 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Ajutor"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+
+            <button
+              onClick={onHintClick}
+              className="p-2 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Indiciu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19.5H14M10.6667 22H13.3333" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.41058 13.6805L8.51463 14.7196C8.82437 15.0112 9 15.4177 9 15.843C9 16.482 9.518 17 10.157 17H13.843C14.482 17 15 16.482 15 15.843C15 15.4177 15.1756 15.0112 15.4854 14.7196L16.5894 13.6805C18.1306 12.2187 18.9912 10.2984 18.9999 8.30193L19 8.21807C19 4.8069 15.866 2 12 2C8.13401 2 5 4.8069 5 8.21807L5.00007 8.30193C5.00875 10.2984 5.86939 12.2187 7.41058 13.6805Z" />
+              </svg>
+            </button>
+
             <button 
               onClick={onSettingsClick}
               className="p-2 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"

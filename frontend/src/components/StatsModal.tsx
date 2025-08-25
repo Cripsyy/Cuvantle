@@ -94,7 +94,7 @@ const StatsModal: React.FC<StatsModalProps> = ({
         </div>
 
         {/* Chart Display */}
-        <div className="mb-2 h-72">
+        <div className="p-4 mb-2 border border-gray-200 rounded-lg dark:border-gray-600 h-72 bg-gray-50 dark:bg-gray-700">
           {currentChart === 'distribution' ? (
             <div className="flex flex-col h-full">
               <h3 className="mb-4 text-lg font-semibold text-center text-gray-900 dark:text-gray-100">DISTRIBUȚIA GHICIRILOR</h3>

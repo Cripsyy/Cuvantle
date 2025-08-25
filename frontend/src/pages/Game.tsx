@@ -6,6 +6,7 @@ import Keyboard from '../components/Keyboard';
 import StatsModal from '../components/StatsModal';
 import SettingsModal from '../components/SettingsModal';
 import HelpModal from '../components/HelpModal';
+import HintModal from '../components/HintModal';
 import EndGameButtons from '../components/EndGameButtons';
 import { GameState, Tile, GameStats, GameSettings, ProgressiveMode } from '../types/game';
 import { getRandomWord, isValidWord, loadWordsFromFile } from '../utils/words';
@@ -54,6 +55,7 @@ const Game: React.FC = () => {
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showHintModal, setShowHintModal] = useState(false);
   const [gameAnalysis, setGameAnalysis] = useState<GameAnalysis | null>(null);
   const [stats, setStats] = useState<GameStats>(() => getStoredStats());
 
@@ -537,6 +539,10 @@ const Game: React.FC = () => {
     setShowHelpModal(true);
   };
 
+  const handleHintClick = () => {
+    setShowHintModal(true);
+  };
+
   if (isLoading || !gameState) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-gray-900 bg-white dark:bg-gray-900 dark:text-gray-100">
@@ -551,6 +557,7 @@ const Game: React.FC = () => {
         onStatsClick={handleStatsClick} 
         onHelpClick={handleHelpClick}
         onSettingsClick={handleSettingsClick}
+        onHintClick={handleHintClick}
         onBackToMenu={backToMenu}
         isProgressiveMode={isProgressiveMode}
         progressiveLevel={isProgressiveMode ? progressiveMode.currentLevel : undefined}
@@ -599,7 +606,14 @@ const Game: React.FC = () => {
         isOpen={showHelpModal}
         onClose={() => setShowHelpModal(false)}
       />
-      
+
+      <HintModal
+        isOpen={showHintModal}
+        onClose={() => setShowHintModal(false)}
+        wordLength={currentWordLength}
+        targetedWord={gameState.targetWord}
+      />
+
       <StatsModal
         isOpen={showStatsModal}
         onClose={() => setShowStatsModal(false)}
