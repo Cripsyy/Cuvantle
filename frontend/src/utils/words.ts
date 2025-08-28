@@ -34,7 +34,6 @@ export const loadWordsFromFile = async (wordLength: number): Promise<string[]> =
       .split('\n')
       .map(word => word.trim().toLowerCase())
       .filter(word => word.length === wordLength);
-    
     wordsLoaded[wordLength] = true;
     console.log(`Loaded ${LOADED_WORDS[wordLength].length} Romanian ${wordLength}-letter words`);
     return LOADED_WORDS[wordLength];
