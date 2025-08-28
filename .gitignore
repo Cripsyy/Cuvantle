@@ -71,9 +71,6 @@ Thumbs.db
 venv/
 env/
 
-# Generated word files (these can be regenerated)
-romanian_*_letter_words.txt
-
 # Node.js / Frontend
 node_modules/
 jspm_packages/
