@@ -1,4 +1,5 @@
 import React from 'react';
+import Progress from './Progress';
 
 interface HeaderProps {
   onStatsClick?: () => void;
@@ -8,7 +9,6 @@ interface HeaderProps {
   onBackToMenu?: () => void;
   isProgressiveMode?: boolean;
   progressiveLevel?: number;
-  maxProgressiveLevel?: number; 
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -19,7 +19,6 @@ const Header: React.FC<HeaderProps> = ({
   onBackToMenu, 
   isProgressiveMode,
   progressiveLevel,
-  maxProgressiveLevel
 }) => {
 
   const wordLengths = [3, 4, 5, 6, 7, 8, 9];
@@ -51,25 +50,10 @@ const Header: React.FC<HeaderProps> = ({
           
           <div className="flex flex-col items-center justify-center">
             <h1 className="text-3xl font-bold">CUVÂNTLE</h1>
-            {isProgressiveMode && progressiveLevel && maxProgressiveLevel != null && (
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex justify-center mt-2">
-                  {/* Render bullet indicators for progressive levels */}
-                  {wordLengths.map(level => (
-                    <div key={level} className="relative mx-1">
-                      <div className={`w-4 h-4 rounded-full border-2 transition-all ${getDifficultyColor(level)}`}/>
-                      {/* Arrow indicator for current level */}
-                      {level === progressiveLevel && (
-                        <div className="absolute transform -translate-x-1/2 top-4 left-1/2">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M7 14l5-5 5 5z"/>
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {isProgressiveMode && progressiveLevel && (
+              <Progress 
+                progressiveLevel={progressiveLevel} 
+              />
             )}
           </div>
           

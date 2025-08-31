@@ -14,6 +14,7 @@ import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost, validateHardM
 import { getStoredStats, saveStats, updateStats } from '../utils/stats';
 import { getStoredSettings, saveSettings} from '../utils/settings';
 import { analyzeGame, GameAnalysis } from '../utils/analysis';
+import { clearHintState } from '../utils/hintState';
 import { 
   getStoredProgressiveMode, 
   saveProgressiveMode, 
@@ -151,6 +152,8 @@ const Game: React.FC = () => {
     setShowSettingsModal(false);
     setShowHelpModal(false);
     setGameAnalysis(null);
+    clearHintState();
+    
     try {
       await loadWordsFromFile(wordLength);
       
@@ -180,6 +183,8 @@ const Game: React.FC = () => {
     setShowSettingsModal(false);
     setShowHelpModal(false);
     setGameAnalysis(null);
+    clearHintState();
+    
     try {
       await loadWordsFromFile(wordLength);
       
@@ -561,7 +566,6 @@ const Game: React.FC = () => {
         onBackToMenu={backToMenu}
         isProgressiveMode={isProgressiveMode}
         progressiveLevel={isProgressiveMode ? progressiveMode.currentLevel : undefined}
-        maxProgressiveLevel={isProgressiveMode ? progressiveMode.maxLevelReached : undefined}
       />
       
       <main className="flex flex-col items-center justify-center flex-1 py-8">
@@ -605,6 +609,8 @@ const Game: React.FC = () => {
       <HelpModal
         isOpen={showHelpModal}
         onClose={() => setShowHelpModal(false)}
+        isProgressiveMode={isProgressiveMode}
+        progressiveLevel={progressiveMode.currentLevel}
       />
 
       <HintModal

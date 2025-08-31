@@ -1,5 +1,3 @@
-import React from 'react';
-
 export interface ChartOption<T> {
   id: T;
   title: string;

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { getStoredHintState, saveHintState } from "../utils/hintState";
 
 interface HintModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ const HintModal: React.FC<HintModalProps> = ({
   targetedWord
 }) => {
   const [hintVisibility, setHintVisibility] = useState<HintVisibility>({});
+  const [persistedHints, setPersistedHints] = useState<AvailableHints | null>(null);
 
   const isVowel = (char: string): boolean => {
     return /^[aăâeiîou]$/.test(char.toLowerCase());
@@ -41,6 +43,10 @@ const HintModal: React.FC<HintModalProps> = ({
   };
 
   const generateHints = useMemo((): AvailableHints => {
+    if (persistedHints) {
+      return persistedHints;
+    }
+
     const difficulty = getDifficulty();
     const letters = targetedWord.toLowerCase().split('');
     
@@ -66,7 +72,7 @@ const HintModal: React.FC<HintModalProps> = ({
       }
     });
 
-    // Shuffle arrays for randomness
+    // Shuffle arrays for randomness only when generating new hints
     const shuffleArray = <T,>(array: T[]): T[] => {
       const shuffled = [...array];
       for (let i = shuffled.length - 1; i > 0; i--) {
@@ -94,7 +100,31 @@ const HintModal: React.FC<HintModalProps> = ({
           consonants: shuffledConsonants.slice(0, 1)
         };
     }
-  }, [targetedWord, wordLength]);
+  }, [targetedWord, wordLength, persistedHints]);
+
+  // Load saved hint state when modal opens or when targetedWord changes
+  useEffect(() => {
+    if (isOpen) {
+      const storedHintState = getStoredHintState(targetedWord, wordLength);
+      if (storedHintState) {
+        setHintVisibility(storedHintState.hintVisibility);
+        if (storedHintState.availableHints) {
+          setPersistedHints(storedHintState.availableHints);
+        }
+      } else {
+        // Reset state for new word
+        setHintVisibility({});
+        setPersistedHints(null);
+      }
+    }
+  }, [isOpen, targetedWord, wordLength]);
+
+  // Save hint state whenever visibility changes or hints are generated
+  useEffect(() => {
+    if (isOpen && Object.keys(hintVisibility).length > 0) {
+      saveHintState(targetedWord, wordLength, hintVisibility, generateHints);
+    }
+  }, [hintVisibility, targetedWord, wordLength, generateHints, isOpen]);
 
   const getDifficultyInfo = () => {
     const difficulty = getDifficulty();
@@ -133,7 +163,7 @@ const HintModal: React.FC<HintModalProps> = ({
   };
 
   const handleClose = () => {
-    setHintVisibility({});
+
     onClose?.();
   };
 

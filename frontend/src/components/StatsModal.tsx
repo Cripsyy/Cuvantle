@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import EndGameButtons from './EndGameButtons';
+import ChartNavigation, { ChartOption } from './ChartNavigation';
 import { GameStats, GameState, GameSettings, ProgressiveMode } from '../types/game';
 import { getWinPercentage, getAverageGuesses, getGamesPlayedByLength } from '../utils/stats';
 import { GameAnalysis } from '../utils/analysis';
@@ -34,6 +35,11 @@ const StatsModal: React.FC<StatsModalProps> = ({
   onResetProgressiveMode
 }) => {
   const [currentChart, setCurrentChart] = useState<'distribution' | 'wordLength'>('distribution');
+
+  const chartOptions: ChartOption<'distribution' | 'wordLength'>[] = [
+    { id: 'distribution', title: 'Distribuția ghicirilor' },
+    { id: 'wordLength', title: 'Jocuri după lungime' }
+  ];
 
   const winPercentage = getWinPercentage(stats);
   const averageGuesses = getAverageGuesses(stats);
@@ -142,55 +148,13 @@ const StatsModal: React.FC<StatsModalProps> = ({
           )}
         </div>
 
-
         {/* Chart Navigation */}
-        <div className="flex items-center justify-center mb-6">
-          <div className="flex items-center gap-4">
-            {/* Left Arrow */}
-            <button
-              onClick={() => setCurrentChart(currentChart === 'distribution' ? 'wordLength' : 'distribution')}
-              className="p-1 text-gray-600 transition-colors dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-              title="Graficul anterior"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            {/* Bullet Indicators */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setCurrentChart('distribution')}
-                className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                  currentChart === 'distribution'
-                    ? 'bg-gray-800 dark:bg-gray-200 scale-125'
-                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
-                }`}
-                title="Distribuția ghicirilor"
-              />
-              <button
-                onClick={() => setCurrentChart('wordLength')}
-                className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                  currentChart === 'wordLength'
-                    ? 'bg-gray-800 dark:bg-gray-200 scale-125'
-                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
-                }`}
-                title="Jocuri după lungime"
-              />
-            </div>
-
-            {/* Right Arrow */}
-            <button
-              onClick={() => setCurrentChart(currentChart === 'distribution' ? 'wordLength' : 'distribution')}
-              className="p-1 text-gray-600 transition-colors dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-              title="Graficul următor"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        </div>
+        <ChartNavigation
+          chartOptions={chartOptions}
+          currentChart={currentChart}
+          onChartChange={setCurrentChart}
+          className="mt-6"
+        />
         
         <EndGameButtons 
           showStatsModal={isOpen}
