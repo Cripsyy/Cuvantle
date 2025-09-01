@@ -49,7 +49,7 @@ interface RowProps {
 
 const Row: React.FC<RowProps> = ({ tiles, isRevealing = false, isShaking = false }) => {
   return (
-    <div className={`flex gap-2 ${isShaking ? 'animate-shake' : ''}`}>
+    <div className={`flex gap-1 md:gap-2 ${isShaking ? 'animate-shake' : ''}`}>
       {tiles.map((tile, index) => (
         <Tile 
           key={index} 

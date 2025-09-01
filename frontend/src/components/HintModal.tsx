@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { getStoredHintState, saveHintState } from "../utils/hintState";
+import { useClickOutside } from "../utils/useClickOutside";
 
 interface HintModalProps {
   isOpen: boolean;
@@ -31,6 +32,12 @@ const HintModal: React.FC<HintModalProps> = ({
 }) => {
   const [hintVisibility, setHintVisibility] = useState<HintVisibility>({});
   const [persistedHints, setPersistedHints] = useState<AvailableHints | null>(null);
+  
+  const handleClose = () => {
+    onClose?.();
+  };
+  
+  const { elementRef: modalRef, handleBackdropClick } = useClickOutside(handleClose);
 
   const isVowel = (char: string): boolean => {
     return /^[aăâeiîou]$/.test(char.toLowerCase());
@@ -162,47 +169,49 @@ const HintModal: React.FC<HintModalProps> = ({
     }));
   };
 
-  const handleClose = () => {
-
-    onClose?.();
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-lg dark:bg-gray-800">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold">Indicii</h2>
+    <div 
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 md:items-center"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        ref={modalRef}
+        className="w-full max-w-md bg-white rounded-t-2xl md:rounded-lg shadow-lg dark:bg-gray-800 animate-slide-up md:animate-none md:mx-4 max-h-[85vh] overflow-y-auto"
+      >
+        <div className="p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-bold">Indicii</h2>
           <button
             onClick={handleClose}
             className="p-1 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="mb-4 sm:mb-6">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               Dificultate: <span className={`font-semibold ${difficultyInfo.color}`}>
                 {difficultyInfo.name}
               </span>
             </span>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               {wordLength} litere
             </span>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
             Indicii disponibile: {difficultyInfo.description}
           </p>
         </div>
 
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Indicii disponibile</h3>
+        <div className="mb-4 sm:mb-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-lg font-semibold">Indicii disponibile</h3>
           </div>
 
           {(generateHints.vowels.length > 0 || generateHints.consonants.length > 0) ? (
@@ -289,10 +298,11 @@ const HintModal: React.FC<HintModalProps> = ({
               )}
             </div>
           ) : (
-            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+            <div className="p-4 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               Nu sunt disponibile indicii pentru acest cuvânt
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

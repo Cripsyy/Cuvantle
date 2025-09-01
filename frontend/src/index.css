@@ -24,8 +24,8 @@
   .tile {
     @apply flex items-center justify-center text-xl font-bold uppercase transition-all duration-300 border-2 border-gray-300 dark:border-gray-600;
     /* Responsive sizing based on word length */
-    width: clamp(40px, calc(100vw / 16), 56px);
-    height: clamp(40px, calc(100vw / 16), 56px);
+    width: clamp(34px, calc(100vw / 16), 56px);
+    height: clamp(34px, calc(100vw / 16), 56px);
     font-size: clamp(14px, calc(100vw / 25), 20px);
   }
 
@@ -34,13 +34,6 @@
     width: 40px;
     height: 40px;
     font-size: 1rem;
-  }
-  
-  /* Specific sizes for different word lengths on larger screens */
-  @media (min-width: 640px) {
-    .tile {
-      @apply w-14 h-14 text-xl;
-    }
   }
   
   .tile-filled {
@@ -67,11 +60,11 @@
   
   .key {
     background-color: var(--color-key-bg);
-    @apply px-3 py-4 text-gray-900 dark:text-gray-100 font-bold rounded-md cursor-pointer transition-colors duration-150 min-h-[60px] w-12 flex items-center justify-center shadow-sm;
+    @apply px-3 py-2 md:px-3 md:py-4 text-gray-900 dark:text-gray-100 font-bold rounded cursor-pointer transition-colors duration-150 min-h-[40px] md:min-h-[60px] w-5 md:w-12 flex items-center justify-center shadow-sm text-xs md:text-base;
   }
   
-  .key.w-20 {
-    @apply px-8 text-sm rounded-lg;
+  .key-large {
+    @apply px-1 md:px-8 text-xs md:text-sm rounded-md md:rounded-lg w-10 md:w-20;
   }
   
   .key:hover:not([style*="background-color"]) {

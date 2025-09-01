@@ -86,8 +86,8 @@ const Home: React.FC<HomeProps> = ({ isDarkMode, onDarkModeToggle }) => {
       {/* Main Content */}
       <main className="flex flex-col items-center justify-center flex-1 px-4 py-8">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="mb-4 text-4xl font-bold">Bun venit la Cuvântle!</h2>
-          <p className="mb-8 text-lg text-gray-600 dark:text-gray-400">
+          <h2 className="mb-4 text-2xl font-bold md:text-4xl">Bun venit la Cuvântle!</h2>
+          <p className="hidden mb-8 text-lg text-gray-600 md:block dark:text-gray-400">
             Ghicește cuvintele românești! Alege lungimea cuvântului cu care vrei să începi.
           </p>
           

@@ -17,7 +17,7 @@ const Progress: React.FC<ProgressProps> = ({
 
   return (
     <div className="flex items-center gap-2 mt-1">
-      <div className="flex justify-center mt-2">
+      <div className="flex justify-center md:mt-2">
         {/* Render bullet indicators for progressive levels */}
         {wordLengths.map(level => (
           <div key={level} className="relative mx-1">
