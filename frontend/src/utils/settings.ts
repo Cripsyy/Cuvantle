@@ -24,6 +24,8 @@ export const getStoredSettings = (): GameSettings => {
 export const saveSettings = (settings: GameSettings): void => {
   try {
     localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    // Dispatch custom event to notify other components of settings change
+    window.dispatchEvent(new CustomEvent('settingsChanged'));
   } catch (error) {
     console.warn('Failed to save settings:', error);
   }

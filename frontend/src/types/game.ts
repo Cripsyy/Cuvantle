@@ -1,4 +1,4 @@
-export type LetterState = 'correct' | 'present' | 'absent' | 'empty' | 'tbd';
+export type LetterState = 'correct' | 'present' | 'absent' | 'empty' | 'hint' | 'tbd';
 
 export interface Tile {
   letter: string;

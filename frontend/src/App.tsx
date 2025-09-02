@@ -31,6 +31,27 @@ const App: React.FC = () => {
     }
   }, []);
 
+  React.useEffect(() => {
+    const handleSettingsChange = () => {
+      const updatedSettings = getStoredSettings();
+      setSettings(updatedSettings);
+      
+      // Apply dark mode immediately
+      if (updatedSettings.isDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+
+    // Listen for custom settings change event
+    window.addEventListener('settingsChanged', handleSettingsChange);
+
+    return () => {
+      window.removeEventListener('settingsChanged', handleSettingsChange);
+    };
+  }, []);
+
   return (
     <Router>
       <Routes>

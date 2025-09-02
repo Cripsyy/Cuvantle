@@ -14,7 +14,7 @@ import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost, validateHardM
 import { getStoredStats, saveStats, updateStats } from '../utils/stats';
 import { getStoredSettings, saveSettings} from '../utils/settings';
 import { analyzeGame, GameAnalysis } from '../utils/analysis';
-import { clearHintState } from '../utils/hintState';
+import { clearHintState, getStoredHintState } from '../utils/hintState';
 import { 
   getStoredProgressiveMode, 
   saveProgressiveMode, 
@@ -59,6 +59,7 @@ const Game: React.FC = () => {
   const [showHintModal, setShowHintModal] = useState(false);
   const [gameAnalysis, setGameAnalysis] = useState<GameAnalysis | null>(null);
   const [stats, setStats] = useState<GameStats>(() => getStoredStats());
+  const [activeHints, setActiveHints] = useState<Map<number, string>>(new Map());
 
   const currentWordLength = isProgressiveMode ? progressiveMode.currentLevel : settings.wordLength;
 
@@ -120,6 +121,33 @@ const Game: React.FC = () => {
           const savedState = progressiveMode.savedGameState!;
           setGameState(savedState);
           
+          // Restore hints if they were previously revealed and game is still playing
+          if (savedState.gameStatus === 'playing' && progressiveMode.currentLevel >= 7) {
+            // Check if there are saved hints for this word
+            const storedHintState = getStoredHintState(savedState.targetWord, progressiveMode.currentLevel);
+            
+            if (storedHintState && storedHintState.hintVisibility) {
+              const hints = storedHintState.availableHints;
+              if (hints) {
+                const newHints = new Map<number, string>();
+                
+                // Apply vowel hint if it was visible
+                if (storedHintState.hintVisibility.vowel && hints.vowels.length > 0) {
+                  newHints.set(hints.vowels[0].position, hints.vowels[0].letter);
+                }
+                
+                // Apply consonant hint if it was visible
+                if (storedHintState.hintVisibility.consonant && hints.consonants.length > 0) {
+                  newHints.set(hints.consonants[0].position, hints.consonants[0].letter);
+                }
+                
+                if (newHints.size > 0) {
+                  setActiveHints(newHints);
+                }
+              }
+            }
+          }
+          
           // If the game is completed, regenerate the analysis
           if (savedState.gameStatus === 'won' || savedState.gameStatus === 'lost') {
             const analysis = analyzeGame(
@@ -152,6 +180,7 @@ const Game: React.FC = () => {
     setShowSettingsModal(false);
     setShowHelpModal(false);
     setGameAnalysis(null);
+    setActiveHints(new Map());
     clearHintState();
     
     try {
@@ -183,6 +212,7 @@ const Game: React.FC = () => {
     setShowSettingsModal(false);
     setShowHelpModal(false);
     setGameAnalysis(null);
+    setActiveHints(new Map());
     clearHintState();
     
     try {
@@ -220,6 +250,29 @@ const Game: React.FC = () => {
   const handleStatsReset = () => {
     const newStats = getStoredStats(); // This will return the reset stats from resetStats function
     setStats(newStats);
+  };
+
+  const handleHintApplied = (hintData: { letter: string; position: number } | null) => {
+    if (hintData) {
+      if (hintData.letter === '') {
+        // Remove hint for this position
+        setActiveHints(prev => {
+          const newHints = new Map(prev);
+          newHints.delete(hintData.position);
+          return newHints;
+        });
+      } else {
+        // Add or update hint
+        setActiveHints(prev => {
+          const newHints = new Map(prev);
+          newHints.set(hintData.position, hintData.letter);
+          return newHints;
+        });
+      }
+    } else {
+      // Remove all hints (legacy behavior)
+      setActiveHints(new Map());
+    }
   };
 
   const handleProgressiveModeStart = () => {
@@ -268,6 +321,30 @@ const Game: React.FC = () => {
       startNewProgressiveGame(3);
       setShowStatsModal(false);
     }
+  };
+
+  const createDisplayBoard = (): Tile[][] => {
+    if (!gameState) return [];
+
+    const displayBoard = gameState.board.map(row => [...row]);
+    
+    // Apply hints to empty tiles in the current row (where user is typing)
+    if (gameState.gameStatus === 'playing' && activeHints.size > 0) {
+      const currentRow = gameState.currentRow;
+      
+      for (const [position, letter] of activeHints) {
+        // Only show hint if the tile is empty and it's the current row
+        if (currentRow < displayBoard.length && position < displayBoard[currentRow].length && 
+            displayBoard[currentRow][position].letter === '') {
+          displayBoard[currentRow][position] = {
+            letter: letter,
+            state: 'hint'
+          };
+        }
+      }
+    }
+    
+    return displayBoard;
   };
 
  const showMessage = (msg: string, duration: number = 2000) => {
@@ -392,6 +469,11 @@ const Game: React.FC = () => {
         newGameStatus = 'lost';
       }
 
+      // Clear hints when game ends
+      if (newGameStatus !== 'playing') {
+        setActiveHints(new Map());
+      }
+
       // Show end game messages and update stats
       setTimeout(() => {
         if (won) {
@@ -404,8 +486,6 @@ const Game: React.FC = () => {
             // Analyze the game
             const analysis = analyzeGame(newGuesses, prevState.targetWord, true, currentWordLength);
             setGameAnalysis(analysis);
-            // Show stats modal with progressive mode options
-            setTimeout(() => setShowStatsModal(true), 2000);
           } else {
             showMessage('Felicitări! Ai ghicit cuvântul!', 5000);
             // Regular mode stats update
@@ -568,10 +648,10 @@ const Game: React.FC = () => {
         progressiveLevel={isProgressiveMode ? progressiveMode.currentLevel : undefined}
       />
       
-      <main className="flex flex-col items-center justify-center flex-1 py-8">
+      <main className="flex flex-col items-center flex-1 justify-evenly">
         <div className="mb-4">
           <Board 
-            board={gameState.board}
+            board={createDisplayBoard()}
             currentRow={gameState.currentRow}
             isRevealing={isRevealing}
             shakingRow={shakingRow}
@@ -579,17 +659,19 @@ const Game: React.FC = () => {
         </div>
         
         {message && (
-          <div className="fixed z-50 px-4 py-2 text-center text-white transform -translate-x-1/2 bg-gray-800 rounded-md top-24 left-1/2 dark:bg-gray-700">
+          <div className="fixed z-50 px-2 py-2 text-xs text-center text-white transform -translate-x-1/2 bg-gray-800 rounded-md md:px-4 md:text-base top-24 left-1/2 dark:bg-gray-700">
             {message}
           </div>
         )}
         
-        <div className="mb-4">
-          <Keyboard 
-            onKeyPress={handleKeyPress}
-            keyboardLetters={gameState.keyboardLetters}
-          />
-        </div>
+        {gameState.gameStatus === 'playing' && (
+          <div className="mb-4">
+            <Keyboard 
+              onKeyPress={handleKeyPress}
+              keyboardLetters={gameState.keyboardLetters}
+            />
+          </div>
+        )}
         
         <EndGameButtons
           showStatsModal={showStatsModal}
@@ -618,6 +700,7 @@ const Game: React.FC = () => {
         onClose={() => setShowHintModal(false)}
         wordLength={currentWordLength}
         targetedWord={gameState.targetWord}
+        onHintApplied={handleHintApplied}
       />
 
       <StatsModal

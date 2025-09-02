@@ -7,6 +7,7 @@ interface HintModalProps {
   onClose?: () => void;
   wordLength: number;
   targetedWord: string;
+  onHintApplied?: (hintData: { letter: string; position: number } | null) => void;
 }
 
 interface HintData {
@@ -28,7 +29,8 @@ const HintModal: React.FC<HintModalProps> = ({
   isOpen, 
   onClose, 
   wordLength, 
-  targetedWord
+  targetedWord,
+  onHintApplied
 }) => {
   const [hintVisibility, setHintVisibility] = useState<HintVisibility>({});
   const [persistedHints, setPersistedHints] = useState<AvailableHints | null>(null);
@@ -118,6 +120,28 @@ const HintModal: React.FC<HintModalProps> = ({
         if (storedHintState.availableHints) {
           setPersistedHints(storedHintState.availableHints);
         }
+        
+        // Restore hints to game board if they were previously revealed (hard difficulty only)
+        if (wordLength >= 7 && onHintApplied && storedHintState.hintVisibility) {
+          const hints = storedHintState.availableHints;
+          if (hints) {
+            // Apply vowel hint if it was visible
+            if (storedHintState.hintVisibility.vowel && hints.vowels.length > 0) {
+              onHintApplied({
+                letter: hints.vowels[0].letter,
+                position: hints.vowels[0].position
+              });
+            }
+            
+            // Apply consonant hint if it was visible
+            if (storedHintState.hintVisibility.consonant && hints.consonants.length > 0) {
+              onHintApplied({
+                letter: hints.consonants[0].letter,
+                position: hints.consonants[0].position
+              });
+            }
+          }
+        }
       } else {
         // Reset state for new word
         setHintVisibility({});
@@ -125,13 +149,13 @@ const HintModal: React.FC<HintModalProps> = ({
       }
     }
   }, [isOpen, targetedWord, wordLength]);
-
+  
   // Save hint state whenever visibility changes or hints are generated
   useEffect(() => {
     if (isOpen && Object.keys(hintVisibility).length > 0) {
       saveHintState(targetedWord, wordLength, hintVisibility, generateHints);
     }
-  }, [hintVisibility, targetedWord, wordLength, generateHints, isOpen]);
+  }, [hintVisibility, targetedWord, wordLength, isOpen]); 
 
   const getDifficultyInfo = () => {
     const difficulty = getDifficulty();
@@ -163,10 +187,32 @@ const HintModal: React.FC<HintModalProps> = ({
   const difficultyInfo = getDifficultyInfo();
 
   const toggleHintVisibility = (type: 'vowel' | 'consonant') => {
+    const newVisibility = !hintVisibility[type];
+    
     setHintVisibility(prev => ({
       ...prev,
-      [type]: !prev[type]
+      [type]: newVisibility
     }));
+
+    // Apply or remove hint to game board if we're on hard difficulty
+    if (difficultyInfo.name === 'Greu' && onHintApplied) {
+      const hintToApply = type === 'vowel' ? generateHints.vowels[0] : generateHints.consonants[0];
+      if (hintToApply) {
+        if (newVisibility) {
+          // Apply hint
+          onHintApplied({
+            letter: hintToApply.letter,
+            position: hintToApply.position
+          });
+        } else {
+          // Remove this specific hint by passing a special object
+          onHintApplied({
+            letter: '',
+            position: hintToApply.position
+          });
+        }
+      }
+    }
   };
 
   if (!isOpen) return null;
@@ -182,7 +228,7 @@ const HintModal: React.FC<HintModalProps> = ({
       >
         <div className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h2 className="text-lg sm:text-xl font-bold">Indicii</h2>
+          <h2 className="text-lg font-bold sm:text-xl">Indicii</h2>
           <button
             onClick={handleClose}
             className="p-1 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -195,23 +241,23 @@ const HintModal: React.FC<HintModalProps> = ({
 
         <div className="mb-4 sm:mb-6">
           <div className="flex items-center justify-between mb-2 sm:mb-3">
-            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-xs text-gray-600 sm:text-sm dark:text-gray-400">
               Dificultate: <span className={`font-semibold ${difficultyInfo.color}`}>
                 {difficultyInfo.name}
               </span>
             </span>
-            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+            <span className="text-xs text-gray-600 sm:text-sm dark:text-gray-400">
               {wordLength} litere
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-gray-500 sm:text-sm dark:text-gray-400">
             Indicii disponibile: {difficultyInfo.description}
           </p>
         </div>
 
         <div className="mb-4 sm:mb-6">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 className="text-base sm:text-lg font-semibold">Indicii disponibile</h3>
+            <h3 className="text-base font-semibold sm:text-lg">Indicii disponibile</h3>
           </div>
 
           {(generateHints.vowels.length > 0 || generateHints.consonants.length > 0) ? (
@@ -298,7 +344,7 @@ const HintModal: React.FC<HintModalProps> = ({
               )}
             </div>
           ) : (
-            <div className="p-4 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            <div className="p-4 text-xs text-center text-gray-500 sm:text-sm dark:text-gray-400">
               Nu sunt disponibile indicii pentru acest cuvânt
             </div>
           )}

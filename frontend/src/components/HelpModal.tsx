@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Progress from './Progress';
 import ChartNavigation, { ChartOption as MenuOption } from './ChartNavigation';
 import { useClickOutside } from '../utils/useClickOutside';
+import { useSwipe } from '../utils/useSwipe';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -25,6 +26,23 @@ const HelpModal: React.FC<HelpModalProps> = ({
     { id: 'progressive', title: 'Ajutor joc progresiv' }
   ];
 
+  const goToPreviousMenu = () => {
+    const currentIndex = MenuOptions.findIndex(option => option.id === currentMenu);
+    const previousIndex = currentIndex > 0 ? currentIndex - 1 : MenuOptions.length - 1;
+    setCurrentMenu(MenuOptions[previousIndex].id);
+  };
+
+  const goToNextMenu = () => {
+    const currentIndex = MenuOptions.findIndex(option => option.id === currentMenu);
+    const nextIndex = currentIndex < MenuOptions.length - 1 ? currentIndex + 1 : 0;
+    setCurrentMenu(MenuOptions[nextIndex].id);
+  };
+
+  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipe({
+    onSwipeLeft: goToNextMenu,
+    onSwipeRight: goToPreviousMenu
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -34,7 +52,10 @@ const HelpModal: React.FC<HelpModalProps> = ({
       >
         <div 
           ref={modalRef}
-          className="p-4 sm:p-6 flex flex-col justify-between w-full max-w-lg bg-white rounded-t-2xl md:rounded-lg shadow-lg dark:bg-gray-800 animate-slide-up md:animate-none md:mx-4 min-h-[75vh] overflow-y-auto"
+          className="p-4 sm:p-6 flex flex-col justify-between w-full max-w-lg bg-white rounded-t-2xl md:rounded-lg shadow-lg dark:bg-gray-800 animate-slide-up md:animate-none md:mx-4 min-h-[75vh] overflow-y-auto select-none touch-pan-y"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           {currentMenu === "normal" ?(
             <>
@@ -139,12 +160,18 @@ const HelpModal: React.FC<HelpModalProps> = ({
             </>
           )}
           {isProgressiveMode && (
-            <MenuNavigation 
-              chartOptions={MenuOptions}
-              currentChart={currentMenu}
-              onChartChange={setCurrentMenu}
-              className="mt-6"
-            />
+            <>
+              <MenuNavigation 
+                chartOptions={MenuOptions}
+                currentChart={currentMenu}
+                onChartChange={setCurrentMenu}
+                className="mt-6"
+              />
+              {/* Mobile swipe indicator */}
+              <div className="mt-2 text-xs text-center text-gray-400 dark:text-gray-500 md:hidden">
+                Glisează pentru navigare
+              </div>
+            </>
           )}
         </div>
       </div>

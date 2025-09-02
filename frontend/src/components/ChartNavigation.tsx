@@ -1,3 +1,5 @@
+import React from 'react';
+
 export interface ChartOption<T> {
   id: T;
   title: string;
@@ -30,7 +32,7 @@ function ChartNavigation<T extends string | number>({
 
   return (
     <div className={`flex items-center justify-center ${className}`}>
-      <div className="flex items-center gap-4">
+      <div className="relative flex items-center gap-4">
         {/* Left Arrow */}
         <button
           onClick={goToPrevious}

@@ -22,6 +22,9 @@ const Tile: React.FC<TileProps> = ({ tile, isRevealing = false, revealDelay = 0 
       classes += ' tile-present';
     } else if (tile.state === 'absent') {
       classes += ' tile-absent';
+    } else if (tile.state === 'hint') {
+      classes += ' tile-hint';
+      classes = classes.replace(' tile-filled', '');
     }
     
     if (isRevealing) {
@@ -76,7 +79,7 @@ const Board: React.FC<BoardProps> = ({
   shakingRow 
 }) => {
   return (
-    <div className="flex flex-col gap-2 p-4">
+    <div className="flex flex-col gap-1 p-4 md:gap-2">
       {board.map((row, index) => (
         <Row 
           key={index} 
