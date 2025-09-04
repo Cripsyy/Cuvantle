@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { getStoredHintState, saveHintState } from "../utils/hintState";
 import { useClickOutside } from "../utils/useClickOutside";
+import useMediaQuery from "../utils/useMediaQuery";
 
 interface HintModalProps {
   isOpen: boolean;
@@ -35,14 +36,20 @@ const HintModal: React.FC<HintModalProps> = ({
   const [hintVisibility, setHintVisibility] = useState<HintVisibility>({});
   const [persistedHints, setPersistedHints] = useState<AvailableHints | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const isMobile = !useMediaQuery('(min-width: 768px)'); // Below md breakpoint is mobile
   
   const handleClose = () => {
-    setIsClosing(true);
-    // Add delay for mobile slidedown animation
-    setTimeout(() => {
-      setIsClosing(false);
+    if (isMobile) {
+      // Mobile: play slidedown animation then close after delay
+      setIsClosing(true);
+      setTimeout(() => {
+        setIsClosing(false);
+        onClose?.();
+      }, 300); // Match the duration of slideDown animation
+    } else {
+      // Desktop: close immediately (no animation)
       onClose?.();
-    }, 300); // Match the duration of slideDown animation
+    }
   };
   
   const { elementRef: modalRef, handleBackdropClick } = useClickOutside(handleClose);

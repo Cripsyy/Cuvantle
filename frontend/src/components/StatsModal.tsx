@@ -6,6 +6,7 @@ import { getWinPercentage, getAverageGuesses, getGamesPlayedByLength } from '../
 import { GameAnalysis } from '../utils/analysis';
 import { useClickOutside } from '../utils/useClickOutside';
 import { useSwipe } from '../utils/useSwipe';
+import useMediaQuery from '../utils/useMediaQuery';
 
 interface StatsModalProps {
   isOpen: boolean;
@@ -38,14 +39,20 @@ const StatsModal: React.FC<StatsModalProps> = ({
 }) => {
   const [currentChart, setCurrentChart] = useState<'distribution' | 'wordLength'>('distribution');
   const [isClosing, setIsClosing] = useState(false);
+  const isMobile = !useMediaQuery('(min-width: 768px)'); // Below md breakpoint is mobile
   
   const handleClose = () => {
-    setIsClosing(true);
-    // Add delay for mobile slidedown animation
-    setTimeout(() => {
-      setIsClosing(false);
+    if (isMobile) {
+      // Mobile: play slidedown animation then close after delay
+      setIsClosing(true);
+      setTimeout(() => {
+        setIsClosing(false);
+        onClose();
+      }, 300); // Match the duration of slideDown animation
+    } else {
+      // Desktop: close immediately (no animation)
       onClose();
-    }, 300); // Match the duration of slideDown animation
+    }
   };
   
   const { elementRef: modalRef, handleBackdropClick } = useClickOutside(handleClose);

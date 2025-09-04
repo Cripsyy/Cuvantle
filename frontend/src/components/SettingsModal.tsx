@@ -3,6 +3,7 @@ import { GameSettings } from '../types/game';
 import { resetStats } from '../utils/stats';
 import { getStoredProgressiveMode } from '../utils/progressiveMode';
 import { useClickOutside } from '../utils/useClickOutside';
+import useMediaQuery from '../utils/useMediaQuery';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -30,14 +31,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const wordLengths = [3, 4, 5, 6, 7, 8, 9];
   const [progressiveMode, setProgressiveMode] = useState(() => getStoredProgressiveMode());
   const [isClosing, setIsClosing] = useState(false);
+  const isMobile = !useMediaQuery('(min-width: 768px)'); // Below md breakpoint is mobile
   
   const handleClose = () => {
-    setIsClosing(true);
-    // Add delay for mobile slidedown animation
-    setTimeout(() => {
-      setIsClosing(false);
+    if (isMobile) {
+      // Mobile: play slidedown animation then close after delay
+      setIsClosing(true);
+      setTimeout(() => {
+        setIsClosing(false);
+        onClose();
+      }, 300); // Match the duration of slideDown animation
+    } else {
+      // Desktop: close immediately (no animation)
       onClose();
-    }, 300); // Match the duration of slideDown animation
+    }
   };
   
   const { elementRef: modalRef, handleBackdropClick } = useClickOutside(handleClose);
