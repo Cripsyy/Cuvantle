@@ -11,7 +11,7 @@ import EndGameButtons from '../components/EndGameButtons';
 import { GameState, Tile, GameStats, GameSettings, ProgressiveMode } from '../types/game';
 import { getRandomWord, isValidWord, loadWordsFromFile } from '../utils/words';
 import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost, validateHardModeGuess } from '../utils/gameLogic';
-import { getStoredStats, saveStats, updateStats } from '../utils/stats';
+import { getStoredStats, saveStats, updateStats, shouldShowHelpModal } from '../utils/stats';
 import { getStoredSettings, saveSettings} from '../utils/settings';
 import { analyzeGame, GameAnalysis } from '../utils/analysis';
 import { clearHintState, getStoredHintState } from '../utils/hintState';
@@ -60,6 +60,7 @@ const Game: React.FC = () => {
   const [gameAnalysis, setGameAnalysis] = useState<GameAnalysis | null>(null);
   const [stats, setStats] = useState<GameStats>(() => getStoredStats());
   const [activeHints, setActiveHints] = useState<Map<number, string>>(new Map());
+  const [helpModalShownThisSession, setHelpModalShownThisSession] = useState(false);
 
   const currentWordLength = isProgressiveMode ? progressiveMode.currentLevel : settings.wordLength;
 
@@ -71,6 +72,26 @@ const Game: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [settings.isDarkMode]);
+
+  // Show help modal for new users who haven't won in either mode
+  useEffect(() => {
+    if (gameState && gameState.gameStatus === 'playing' && !helpModalShownThisSession) {
+      if (shouldShowHelpModal(stats, isProgressiveMode)) {
+        // Show help modal after a short delay when a new game starts
+        const timer = setTimeout(() => {
+          setShowHelpModal(true);
+          setHelpModalShownThisSession(true);
+        }, 1000);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [gameState?.gameStatus, isProgressiveMode, stats.wonNormalMode, stats.wonProgressiveMode, helpModalShownThisSession]);
+
+  // Reset help modal session flag when switching between modes
+  useEffect(() => {
+    setHelpModalShownThisSession(false);
+  }, [isProgressiveMode]);
 
   // Initialize game when component mounts or word length changes
   useEffect(() => {
@@ -313,7 +334,13 @@ const Game: React.FC = () => {
   };
 
   const resetProgressiveModeHandler = () => {
-    if (window.confirm('Ești sigur că vrei să resetezi modul progresiv? Vei începe din nou de la nivelul 3.')) {
+    // Check if the current game is lost
+    const gameIsLost = gameState && gameState.gameStatus === 'lost';
+    
+    // If game is lost, no need to ask for confirmation - user has no choice
+    const shouldConfirm = !gameIsLost;
+    
+    if (!shouldConfirm || window.confirm('Ești sigur că vrei să resetezi modul progresiv? Vei începe din nou de la nivelul 3.')) {
       const resetMode = resetProgressiveMode(progressiveMode);
       setProgressiveMode(resetMode);
       
@@ -480,7 +507,7 @@ const Game: React.FC = () => {
           if (isProgressiveMode) {
             showMessage('Felicitări! Ai ghicit cuvântul!', 5000);
             // In progressive mode, update stats and show modal
-            const newStats = updateStats(stats, true, prevState.currentRow + 1, currentWordLength);
+            const newStats = updateStats(stats, true, prevState.currentRow + 1, currentWordLength, true);
             setStats(newStats);
             saveStats(newStats);
             // Analyze the game
@@ -489,7 +516,7 @@ const Game: React.FC = () => {
           } else {
             showMessage('Felicitări! Ai ghicit cuvântul!', 5000);
             // Regular mode stats update
-            const newStats = updateStats(stats, true, prevState.currentRow + 1, currentWordLength);
+            const newStats = updateStats(stats, true, prevState.currentRow + 1, currentWordLength, false);
             setStats(newStats);
             saveStats(newStats);
             // Analyze the game
@@ -502,7 +529,7 @@ const Game: React.FC = () => {
           showMessage(`Cuvântul era: ${gameState.targetWord.toUpperCase()}`, Infinity);
           if (isProgressiveMode) {
             // In progressive mode, update stats and show modal
-            const newStats = updateStats(stats, false, 0, currentWordLength);
+            const newStats = updateStats(stats, false, 0, currentWordLength, true);
             setStats(newStats);
             saveStats(newStats);
             // Analyze the game
@@ -512,7 +539,7 @@ const Game: React.FC = () => {
             setTimeout(() => setShowStatsModal(true), 2000);
           } else {
             // Update stats for loss
-            const newStats = updateStats(stats, false, 0, currentWordLength);
+            const newStats = updateStats(stats, false, 0, currentWordLength, false);
             setStats(newStats);
             saveStats(newStats);
             // Analyze the game

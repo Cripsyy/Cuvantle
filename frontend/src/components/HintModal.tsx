@@ -34,9 +34,15 @@ const HintModal: React.FC<HintModalProps> = ({
 }) => {
   const [hintVisibility, setHintVisibility] = useState<HintVisibility>({});
   const [persistedHints, setPersistedHints] = useState<AvailableHints | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
   
   const handleClose = () => {
-    onClose?.();
+    setIsClosing(true);
+    // Add delay for mobile slidedown animation
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose?.();
+    }, 300); // Match the duration of slideDown animation
   };
   
   const { elementRef: modalRef, handleBackdropClick } = useClickOutside(handleClose);
@@ -224,7 +230,11 @@ const HintModal: React.FC<HintModalProps> = ({
     >
       <div 
         ref={modalRef}
-        className="w-full max-w-md bg-white rounded-t-2xl md:rounded-lg shadow-lg dark:bg-gray-800 animate-slide-up md:animate-none md:mx-4 max-h-[85vh] overflow-y-auto"
+        className={`w-full max-w-md bg-white rounded-t-2xl md:rounded-lg shadow-lg dark:bg-gray-800 md:mx-4 max-h-[85vh] overflow-y-auto ${
+          isClosing 
+            ? 'animate-slide-down md:animate-none' 
+            : 'animate-slide-up md:animate-none'
+        }`}
       >
         <div className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4 sm:mb-6">

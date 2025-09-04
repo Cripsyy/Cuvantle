@@ -1,4 +1,5 @@
 import { GameStats } from '../types/game';
+import { getStoredProgressiveMode } from './progressiveMode';
 
 const STATS_KEY = 'cuvantle-stats';
 
@@ -11,6 +12,24 @@ export const getStoredStats = (): GameStats => {
       if (!parsedStats.gamesPlayedByLength) {
         parsedStats.gamesPlayedByLength = {};
       }
+      // Migration: ensure wonNormalMode and wonProgressiveMode exist
+      if (parsedStats.wonNormalMode === undefined) {
+        parsedStats.wonNormalMode = false;
+      }
+      if (parsedStats.wonProgressiveMode === undefined) {
+        parsedStats.wonProgressiveMode = false;
+      }
+      
+      // One-time migration: If user has reached level 5+ but wonProgressiveMode is still false, fix it
+      if (!parsedStats.wonProgressiveMode) {
+        const progressiveMode = getStoredProgressiveMode();
+        if (progressiveMode.maxLevelReached > 4) {
+          parsedStats.wonProgressiveMode = true;
+          // Save the updated stats back to localStorage
+          localStorage.setItem(STATS_KEY, JSON.stringify(parsedStats));
+        }
+      }
+      
       return parsedStats;
     }
   } catch (error) {
@@ -24,7 +43,9 @@ export const getStoredStats = (): GameStats => {
     currentStreak: 0,
     maxStreak: 0,
     guessDistribution: [0, 0, 0, 0, 0, 0], // Index 0 = 1 guess, Index 5 = 6 guesses
-    gamesPlayedByLength: {} // wordLength -> number of games played
+    gamesPlayedByLength: {}, 
+    wonNormalMode: false,
+    wonProgressiveMode: false
   };
 };
 
@@ -36,7 +57,11 @@ export const saveStats = (stats: GameStats): void => {
   }
 };
 
-export const updateStats = (currentStats: GameStats, gameWon: boolean, guessCount: number, wordLength: number): GameStats => {
+export const updateStats = (currentStats: GameStats, gameWon: boolean, guessCount: number, wordLength: number, isProgressiveMode: boolean = false): GameStats => {
+
+  const progressiveMode = getStoredProgressiveMode();
+  const maxLevelReached = progressiveMode.maxLevelReached;
+
   const newStats = {
     ...currentStats,
     gamesPlayed: currentStats.gamesPlayed + 1,
@@ -46,7 +71,9 @@ export const updateStats = (currentStats: GameStats, gameWon: boolean, guessCoun
       ? Math.max(currentStats.maxStreak, currentStats.currentStreak + 1)
       : currentStats.maxStreak,
     guessDistribution: [...currentStats.guessDistribution],
-    gamesPlayedByLength: { ...(currentStats.gamesPlayedByLength || {}) }
+    gamesPlayedByLength: { ...(currentStats.gamesPlayedByLength || {}) },
+    wonNormalMode: currentStats.wonNormalMode || (gameWon && !isProgressiveMode),
+    wonProgressiveMode: currentStats.wonProgressiveMode || (maxLevelReached > 4 && isProgressiveMode)
   };
 
   // Update guess distribution if the game was won
@@ -98,8 +125,22 @@ export const resetStats = (): GameStats => {
     currentStreak: 0,
     maxStreak: 0,
     guessDistribution: [0, 0, 0, 0, 0, 0],
-    gamesPlayedByLength: {}
+    gamesPlayedByLength: {},
+    wonNormalMode: false,
+    wonProgressiveMode: false
   };
   saveStats(resetStats);
   return resetStats;
+};
+
+export const shouldShowHelpModal = (stats: GameStats, isProgressiveMode: boolean): boolean => {
+  if (isProgressiveMode) {
+    // For progressive mode, check both wonProgressiveMode and maxLevelReached
+    // If user has reached level 5+, they've "won" progressive mode
+    const progressiveMode = getStoredProgressiveMode();
+    const hasCompletedProgressive = stats.wonProgressiveMode || progressiveMode.maxLevelReached > 4;
+    return !hasCompletedProgressive;
+  } else {
+    return !stats.wonNormalMode;
+  }
 };

@@ -29,7 +29,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const wordLengths = [3, 4, 5, 6, 7, 8, 9];
   const [progressiveMode, setProgressiveMode] = useState(() => getStoredProgressiveMode());
-  const { elementRef: modalRef, handleBackdropClick } = useClickOutside(onClose);
+  const [isClosing, setIsClosing] = useState(false);
+  
+  const handleClose = () => {
+    setIsClosing(true);
+    // Add delay for mobile slidedown animation
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 300); // Match the duration of slideDown animation
+  };
+  
+  const { elementRef: modalRef, handleBackdropClick } = useClickOutside(handleClose);
 
   if (!isOpen) return null;
 
@@ -91,13 +102,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     >
       <div 
         ref={modalRef}
-        className="w-full max-w-md bg-white rounded-t-2xl md:rounded-lg shadow-lg dark:bg-gray-800 animate-slide-up md:animate-none md:mx-4 max-h-[85vh] overflow-y-auto"
+        className={`w-full max-w-md bg-white rounded-t-2xl md:rounded-lg shadow-lg dark:bg-gray-800 md:mx-4 max-h-[85vh] overflow-y-auto ${
+          isClosing 
+            ? 'animate-slide-down md:animate-none' 
+            : 'animate-slide-up md:animate-none'
+        }`}
       >
         <div className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h2 className="text-lg font-bold sm:text-xl">Setări</h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-1 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

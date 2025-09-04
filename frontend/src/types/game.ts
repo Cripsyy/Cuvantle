@@ -22,6 +22,8 @@ export interface GameStats {
   maxStreak: number;
   guessDistribution: number[];
   gamesPlayedByLength?: Record<number, number>; // wordLength -> number of games played (optional for backwards compatibility)
+  wonNormalMode?: boolean;
+  wonProgressiveMode?: boolean;
 }
 
 export interface GameSettings {

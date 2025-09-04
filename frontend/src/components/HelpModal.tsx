@@ -18,8 +18,28 @@ const HelpModal: React.FC<HelpModalProps> = ({
   progressiveLevel
 }) => {
   const MenuNavigation = ChartNavigation;
-  const [currentMenu, setCurrentMenu] = useState<'normal' | 'progressive'>('normal');
-  const { elementRef: modalRef, handleBackdropClick } = useClickOutside(onClose);
+  const [currentMenu, setCurrentMenu] = useState<'normal' | 'progressive'>(
+    isProgressiveMode ? 'progressive' : 'normal'
+  );
+  const [isClosing, setIsClosing] = useState(false);
+  
+  const handleClose = () => {
+    setIsClosing(true);
+    // Add delay for mobile slidedown animation
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 300); // Match the duration of slideDown animation
+  };
+  
+  const { elementRef: modalRef, handleBackdropClick } = useClickOutside(handleClose);
+
+  // Reset to appropriate tab when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setCurrentMenu(isProgressiveMode ? 'progressive' : 'normal');
+    }
+  }, [isOpen, isProgressiveMode]);
 
   const MenuOptions: MenuOption<'normal' | 'progressive'>[] = [
     { id: 'normal', title: 'Ajutor joc normal' },
@@ -38,31 +58,47 @@ const HelpModal: React.FC<HelpModalProps> = ({
     setCurrentMenu(MenuOptions[nextIndex].id);
   };
 
-  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipe({
+  const { handleTouchStart, handleTouchMove, handleTouchEnd, isSwiping } = useSwipe({
     onSwipeLeft: goToNextMenu,
-    onSwipeRight: goToPreviousMenu
+    onSwipeRight: goToPreviousMenu,
+    minSwipeDistance: 75 // Increase minimum distance to prevent accidental swipes
   });
+
+  // Custom backdrop click handler that ignores clicks when swiping
+  const handleCustomBackdropClick = (e: React.MouseEvent) => {
+    if (isSwiping) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    handleBackdropClick(e);
+  };
 
   if (!isOpen) return null;
 
   return (
       <div 
         className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 md:items-center"
-        onClick={handleBackdropClick}
+        onClick={handleCustomBackdropClick}
       >
         <div 
           ref={modalRef}
-          className="p-4 sm:p-6 flex flex-col justify-between w-full max-w-lg bg-white rounded-t-2xl md:rounded-lg shadow-lg dark:bg-gray-800 animate-slide-up md:animate-none md:mx-4 min-h-[75vh] overflow-y-auto select-none touch-pan-y"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          className={`p-4 sm:p-6 flex flex-col justify-between w-full max-w-lg bg-white rounded-t-2xl md:rounded-lg shadow-lg dark:bg-gray-800 md:mx-4 min-h-[75vh] overflow-y-auto select-none touch-pan-y ${
+            isClosing 
+              ? 'animate-slide-down md:animate-none' 
+              : 'animate-slide-up md:animate-none'
+          }`}
+          onTouchStart={isProgressiveMode ? handleTouchStart : undefined}
+          onTouchMove={isProgressiveMode ? handleTouchMove : undefined}
+          onTouchEnd={isProgressiveMode ? handleTouchEnd : undefined}
+          onClick={(e) => e.stopPropagation()} // Prevent backdrop clicks from modal content
         >
           {currentMenu === "normal" ?(
             <>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-extrabold sm:text-xl md:text-2xl">Cum se joacă?</h2>
                 <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="p-1 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                     <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +151,7 @@ const HelpModal: React.FC<HelpModalProps> = ({
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-extrabold sm:text-xl md:text-2xl">Cum se joacă?(Modul Progresiv)</h2>
                   <button
-                      onClick={onClose}
+                      onClick={handleClose}
                       className="p-1 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                       <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +201,7 @@ const HelpModal: React.FC<HelpModalProps> = ({
                 chartOptions={MenuOptions}
                 currentChart={currentMenu}
                 onChartChange={setCurrentMenu}
-                className="mt-6"
+                className="z-50 mt-6"
               />
               {/* Mobile swipe indicator */}
               <div className="mt-2 text-xs text-center text-gray-400 dark:text-gray-500 md:hidden">

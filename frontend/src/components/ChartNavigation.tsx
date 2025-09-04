@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export interface ChartOption<T> {
   id: T;
@@ -19,15 +19,33 @@ function ChartNavigation<T extends string | number>({
   className = ""
 }: ChartNavigationProps<T>) {
   const currentIndex = chartOptions.findIndex(option => option.id === currentChart);
+  // Prevent rapid double-clicks by disabling navigation briefly after a click
+  const [isNavigating, setIsNavigating] = useState(false);
+  const navTimer = useRef<number | null>(null);
+  useEffect(() => {
+    return () => {
+      if (navTimer.current) {
+        window.clearTimeout(navTimer.current);
+      }
+    };
+  }, []);
   
   const goToPrevious = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
     const previousIndex = currentIndex > 0 ? currentIndex - 1 : chartOptions.length - 1;
     onChartChange(chartOptions[previousIndex].id);
+    if (navTimer.current) window.clearTimeout(navTimer.current);
+    navTimer.current = window.setTimeout(() => setIsNavigating(false), 250);
   };
 
   const goToNext = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
     const nextIndex = currentIndex < chartOptions.length - 1 ? currentIndex + 1 : 0;
     onChartChange(chartOptions[nextIndex].id);
+    if (navTimer.current) window.clearTimeout(navTimer.current);
+    navTimer.current = window.setTimeout(() => setIsNavigating(false), 250);
   };
 
   return (
@@ -36,6 +54,7 @@ function ChartNavigation<T extends string | number>({
         {/* Left Arrow */}
         <button
           onClick={goToPrevious}
+          disabled={isNavigating}
           className="p-1 text-gray-600 transition-colors dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           title="Graficul anterior"
         >
@@ -63,7 +82,8 @@ function ChartNavigation<T extends string | number>({
         {/* Right Arrow */}
         <button
           onClick={goToNext}
-          className="p-1 text-gray-600 transition-colors dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+          disabled={isNavigating}
+          className={`p-1 text-gray-600 transition-colors dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100`}
           title="Graficul următor"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

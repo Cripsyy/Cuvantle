@@ -37,7 +37,18 @@ const StatsModal: React.FC<StatsModalProps> = ({
   onResetProgressiveMode
 }) => {
   const [currentChart, setCurrentChart] = useState<'distribution' | 'wordLength'>('distribution');
-  const { elementRef: modalRef, handleBackdropClick } = useClickOutside(onClose);
+  const [isClosing, setIsClosing] = useState(false);
+  
+  const handleClose = () => {
+    setIsClosing(true);
+    // Add delay for mobile slidedown animation
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 300); // Match the duration of slideDown animation
+  };
+  
+  const { elementRef: modalRef, handleBackdropClick } = useClickOutside(handleClose);
 
   const chartOptions: ChartOption<'distribution' | 'wordLength'>[] = [
     { id: 'distribution', title: 'Distribuția ghicirilor' },
@@ -56,10 +67,21 @@ const StatsModal: React.FC<StatsModalProps> = ({
     setCurrentChart(chartOptions[nextIndex].id);
   };
 
-  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useSwipe({
+  const { handleTouchStart, handleTouchMove, handleTouchEnd, isSwiping } = useSwipe({
     onSwipeLeft: goToNextChart,
-    onSwipeRight: goToPreviousChart
+    onSwipeRight: goToPreviousChart,
+    minSwipeDistance: 75 // Increase minimum distance to prevent accidental swipes
   });
+
+  // Custom backdrop click handler that ignores clicks when swiping
+  const handleCustomBackdropClick = (e: React.MouseEvent) => {
+    if (isSwiping) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    handleBackdropClick(e);
+  };
 
   const winPercentage = getWinPercentage(stats);
   const averageGuesses = getAverageGuesses(stats);
@@ -83,20 +105,25 @@ const StatsModal: React.FC<StatsModalProps> = ({
   return (
     <div 
       className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 md:items-center"
-      onClick={handleBackdropClick}
+      onClick={handleCustomBackdropClick}
     >
       <div 
         ref={modalRef}
-        className="bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-lg w-full max-w-lg animate-slide-up md:animate-none md:mx-4 max-h-[85vh] overflow-y-auto select-none touch-pan-y"
+        className={`bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-lg w-full max-w-lg md:mx-4 max-h-[85vh] overflow-y-auto select-none touch-pan-y ${
+          isClosing 
+            ? 'animate-slide-down md:animate-none' 
+            : 'animate-slide-up md:animate-none'
+        }`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onClick={(e) => e.stopPropagation()} // Prevent backdrop clicks from modal content
       >
         <div className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2 className="text-lg font-bold text-gray-900 sm:text-xl md:text-2xl dark:text-gray-100">STATISTICI</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 transition-colors rounded-full sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
