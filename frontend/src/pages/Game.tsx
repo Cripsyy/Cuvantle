@@ -9,7 +9,7 @@ import HelpModal from '../components/HelpModal';
 import HintModal from '../components/HintModal';
 import EndGameButtons from '../components/EndGameButtons';
 import { GameState, Tile, GameStats, GameSettings, ProgressiveMode } from '../types/game';
-import { getRandomWord, isValidWord, loadWordsFromFile } from '../utils/words';
+import { getRandomWord, isValidWord, loadWordsFromFile, getWordList } from '../utils/words';
 import { checkGuess, updateKeyboardLetters, isGameWon, isGameLost, validateHardModeGuess } from '../utils/gameLogic';
 import { getStoredStats, saveStats, updateStats, shouldShowHelpModal } from '../utils/stats';
 import { getStoredSettings, saveSettings} from '../utils/settings';
@@ -171,11 +171,13 @@ const Game: React.FC = () => {
           
           // If the game is completed, regenerate the analysis
           if (savedState.gameStatus === 'won' || savedState.gameStatus === 'lost') {
+            const wordList = getWordList(progressiveMode.currentLevel);
             const analysis = analyzeGame(
               savedState.guesses, 
               savedState.targetWord, 
               savedState.gameStatus === 'won', 
-              progressiveMode.currentLevel
+              progressiveMode.currentLevel,
+              wordList
             );
             setGameAnalysis(analysis);
           }
@@ -511,7 +513,8 @@ const Game: React.FC = () => {
             setStats(newStats);
             saveStats(newStats);
             // Analyze the game
-            const analysis = analyzeGame(newGuesses, prevState.targetWord, true, currentWordLength);
+            const wordList = getWordList(currentWordLength);
+            const analysis = analyzeGame(newGuesses, prevState.targetWord, true, currentWordLength, wordList);
             setGameAnalysis(analysis);
           } else {
             showMessage('Felicitări! Ai ghicit cuvântul!', 5000);
@@ -520,7 +523,8 @@ const Game: React.FC = () => {
             setStats(newStats);
             saveStats(newStats);
             // Analyze the game
-            const analysis = analyzeGame(newGuesses, prevState.targetWord, true, currentWordLength);
+            const wordList = getWordList(currentWordLength);
+            const analysis = analyzeGame(newGuesses, prevState.targetWord, true, currentWordLength, wordList);
             setGameAnalysis(analysis);
             // Show stats modal after a delay
             setTimeout(() => setShowStatsModal(true), 2000);
@@ -533,7 +537,8 @@ const Game: React.FC = () => {
             setStats(newStats);
             saveStats(newStats);
             // Analyze the game
-            const analysis = analyzeGame(newGuesses, prevState.targetWord, false, currentWordLength);
+            const wordList = getWordList(currentWordLength);
+            const analysis = analyzeGame(newGuesses, prevState.targetWord, false, currentWordLength, wordList);
             setGameAnalysis(analysis);
             // Show stats modal with reset option
             setTimeout(() => setShowStatsModal(true), 2000);
@@ -543,7 +548,8 @@ const Game: React.FC = () => {
             setStats(newStats);
             saveStats(newStats);
             // Analyze the game
-            const analysis = analyzeGame(newGuesses, prevState.targetWord, false, currentWordLength);
+            const wordList = getWordList(currentWordLength);
+            const analysis = analyzeGame(newGuesses, prevState.targetWord, false, currentWordLength, wordList);
             setGameAnalysis(analysis);
             // Show stats modal after a delay
             setTimeout(() => setShowStatsModal(true), 2000);
@@ -600,7 +606,8 @@ const Game: React.FC = () => {
           analysis: gameAnalysis, 
           guesses: gameState.guesses, 
           targetWord: gameState.targetWord, 
-          gameWon: gameState.gameStatus === 'won' 
+          gameWon: gameState.gameStatus === 'won',
+          isProgressive: isProgressiveMode
         } 
       });
     }
