@@ -76,35 +76,13 @@ const Analysis: React.FC = () => {
     setCurrentGuessIndex(guesses.length - 1);
   };
 
-  const getLuckDescription = (luck: number): string => {
-    if (luck >= 80) return "Incredibil de norocos!";
-    if (luck >= 60) return "Foarte norocos";
-    if (luck >= 40) return "Destul de norocos";
-    if (luck >= 20) return "Puțin norocos";
-    return "Nu prea norocos";
-  };
-
-  const getSkillDescription = (skill: number): string => {
-    if (skill >= 80) return "Strategie excelentă!";
-    if (skill >= 60) return "Foarte abil";
-    if (skill >= 40) return "Destul de abil";
-    if (skill >= 20) return "Poate fi îmbunătățit";
-    return "Necesită practică";
-  };
-
-  const getScoreColor = (score: number): string => {
-    if (score >= 70) return "text-green-600 dark:text-green-400";
-    if (score >= 40) return "text-yellow-600 dark:text-yellow-400";
-    return "text-red-600 dark:text-red-400";
-  };
-
   // Helper function to render a tile
   const renderTile = (letter: string, state: string) => {
     const stateColors = {
       correct: 'bg-green-600 border-green-600 text-white',
       present: 'bg-yellow-500 border-yellow-500 text-white',
       absent: 'bg-gray-400 border-gray-400 text-white dark:bg-gray-600 dark:border-gray-600',
-      empty: 'bg-white border-gray-300 dark:bg-gray-800 dark:border-gray-600'
+      empty: 'bg-gray-500 border-gray-500 dark:bg-gray-900 dark:border-gray-900'
     };
     
     return (
@@ -121,19 +99,17 @@ const Analysis: React.FC = () => {
         <div className="px-4 py-4 mx-auto max-w-7xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-full">
-                <span className="font-bold text-white">CB</span>
-              </div>
               <div>
                 <h1 className="text-2xl font-bold">CuvântleBot</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Analiza performanței tale</p>
               </div>
             </div>
             <button
               onClick={() => navigate('/')}
-              className="px-4 py-2 text-blue-600 transition-colors rounded-lg hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-gray-700"
+              className="p-1.5 sm:p-2 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              ← Înapoi acasă
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
             </button>
           </div>
         </div>
@@ -142,10 +118,10 @@ const Analysis: React.FC = () => {
       {/* Main content */}
       <div className="px-4 py-8 mx-auto max-w-7xl">
         {/* Game Result */}
-        <div className="p-6 mb-8 bg-gray-100 rounded-lg dark:bg-gray-800">
+        <div className="p-6">
           <div className="flex items-center justify-between">
             <span className="text-xl font-semibold">
-              {gameWon ? "🎉 Ai câștigat!" : "😞 Ai pierdut"}
+              {gameWon ? "Ai câștigat!" : "Ai pierdut"}
             </span>
             <span className="text-gray-600 dark:text-gray-400">
               Cuvântul era:&nbsp;
@@ -155,7 +131,9 @@ const Analysis: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {targetWord.toUpperCase()}
+                <span title = "Apasă pentru a vedea definiția cuvântului">
+                  {targetWord.toUpperCase()}
+                </span>
               </a>
             </span>
           </div>
@@ -164,32 +142,55 @@ const Analysis: React.FC = () => {
         {/* Two-column layout */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Left side - Grid and Controls */}
-          <div className="flex flex-col space-y-6 rounded-lg bg-gray-50 dark:bg-gray-800">
+          <div className="flex flex-col space-y-4 rounded-lg bg-gray-50 dark:bg-gray-800">
             {/* Grid Display */}
             <div className="p-6">
-              <h3 className="mb-4 text-xl font-semibold">Progresul încercărilor</h3>
+              <h3 className="flex justify-center mb-8 text-xl font-semibold">Progresul încercărilor</h3>
               <div className="flex flex-col items-center space-y-3">
-                {guesses.map((guess, guessIdx) => (
-                  <div 
-                    key={guessIdx}
-                    className={`flex gap-2 transition-opacity ${guessIdx <= currentGuessIndex ? 'opacity-100' : 'opacity-20'}`}
-                  >
-                    {guess.split('').map((letter, letterIdx) => {
-                      const state = guessIdx <= currentGuessIndex 
-                        ? analysis.guessMetrics[guessIdx].feedback[letterIdx]
-                        : 'empty';
-                      return (
-                        <div key={letterIdx}>
-                          {renderTile(letter, state)}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                {Array.from({ length: 6 }).map((_, rowIdx) => {
+                  const guess = guesses[rowIdx];
+                  const wordLength = targetWord.length;
+                  
+                  // If this row has no guess, show empty tiles
+                  if (!guess) {
+                    return (
+                      <div key={rowIdx} className="flex gap-2">
+                        {Array.from({ length: wordLength }).map((_, letterIdx) => (
+                          <div key={letterIdx}>
+                            {renderTile('', 'empty')}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  
+                  // Determine if this row's letters should be shown
+                  // First guess always shows letters
+                  // Other guesses show letters only when user reaches that index
+                  const isFirstGuess = rowIdx === 0;
+                  const hasReachedThisGuess = rowIdx <= currentGuessIndex;
+                  const shouldShowLetters = isFirstGuess || hasReachedThisGuess;
+                  
+                  return (
+                    <div 
+                      key={rowIdx}
+                      className="flex gap-2"
+                    >
+                      {guess.split('').map((letter, letterIdx) => {
+                        const state = analysis.guessMetrics[rowIdx].feedback[letterIdx];
+                        const displayLetter = shouldShowLetters ? letter : '';
+                        
+                        return (
+                          <div key={letterIdx}>
+                            {renderTile(displayLetter, state)}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-
-            <hr className="my-3 sm:my-4 border-t-1" />
 
             {/* Navigation Controls */}
             <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-800">
@@ -206,75 +207,137 @@ const Analysis: React.FC = () => {
                 <button
                   onClick={handleReset}
                   disabled={currentGuessIndex === 0}
-                  className="flex-1 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                  className="flex justify-center flex-1 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                 >
-                  ⏮ Prima
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4V20M8 12H20M8 12L12 8M8 12L12 16" />
+                  </svg>
                 </button>
                 <button
                   onClick={handlePrevious}
                   disabled={currentGuessIndex === 0}
-                  className="flex-1 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                  className="flex justify-center flex-1 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                 >
-                  ← Înapoi
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12H18M6 12L11 7M6 12L11 17" />
+                  </svg>
                 </button>
                 <button
                   onClick={handleNext}
                   disabled={currentGuessIndex === guesses.length - 1}
-                  className="flex-1 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                  className="flex justify-center flex-1 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                 >
-                  Înainte →
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12H18M18 12L13 7M18 12L13 17" />
+                  </svg>
                 </button>
                 <button
                   onClick={handleShowAll}
                   disabled={currentGuessIndex === guesses.length - 1}
-                  className="flex-1 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                  className="flex justify-center flex-1 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                 >
-                  Ultima ⏭
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 4V20M4 12H16M16 12L12 8M16 12L12 16" />
+                  </svg>
                 </button>
               </div>
             </div>
           </div>
 
           {/* Right side - Scores */}
-          <div className="flex flex-col space-y-6">
-            {/* Luck Score */}
-            <div className="p-6 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900">
-              <div className="text-center">
-                <div className="mb-4 text-5xl font-bold">🍀</div>
-                <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">NOROC</div>
-                <div className={`text-5xl font-bold ${getScoreColor(cumulativeScores.luck)} mb-2`}>
-                  {cumulativeScores.luck}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {getLuckDescription(cumulativeScores.luck)}
-                </div>
-              </div>
+          <div className="flex flex-col p-6 rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 className="flex justify-center mb-4 text-xl font-semibold">Statistici</h3>
+            
+            {/* Header Row */}
+            <div className="grid grid-cols-4 gap-4 pb-3 mb-3 text-sm font-semibold text-center text-gray-700 border-b-2 border-gray-300 dark:text-gray-300 dark:border-gray-600">
+              <div>Noroc</div>
+              <div>Abilitate</div>
+              <div>Cuvinte rămase</div>
+              <div>Informație</div>
             </div>
-
-            {/* Skill Score */}
-            <div className="p-6 rounded-lg bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900">
-              <div className="text-center">
-                <div className="mb-4 text-5xl font-bold">🧠</div>
-                <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">ABILITATE</div>
-                <div className={`text-5xl font-bold ${getScoreColor(cumulativeScores.skill)} mb-2`}>
-                  {cumulativeScores.skill}
-                </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {getSkillDescription(cumulativeScores.skill)}
-                </div>
-              </div>
+            
+            {/* Data Rows - always render 6 rows but only populate when reached */}
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, idx) => {
+                const metrics = analysis.guessMetrics[idx];
+                const hasReachedThisRow = idx <= currentGuessIndex;
+                const shouldPopulate = hasReachedThisRow && metrics;
+                
+                // Calculate values only if we should populate
+                let normalizedLuck = 0;
+                let normalizedSkill = 0;
+                
+                if (shouldPopulate) {
+                  // Normalize luck (scale to 0-100)
+                  normalizedLuck = Math.min(100, Math.round(metrics.luck * 10));
+                  
+                  // Normalize skill (based on information theory)
+                  const wordCount = metrics.wordsRemaining + metrics.wordsEliminated || 100;
+                  const maxPossibleInformation = Math.log2(wordCount);
+                  normalizedSkill = Math.min(100, Math.round((metrics.skill / Math.max(1, maxPossibleInformation)) * 100));
+                }
+                
+                return (
+                  <React.Fragment key={idx}>
+                    <div className="grid grid-cols-4 gap-4 text-center">
+                      <div className="p-2">
+                        <div className={`text-lg font-bold ${shouldPopulate ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>
+                          {shouldPopulate ? normalizedLuck : '-'}
+                        </div>
+                      </div>
+                      <div className="p-2">
+                        <div className={`text-lg font-bold ${shouldPopulate ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>
+                          {shouldPopulate ? normalizedSkill : '-'}
+                        </div>
+                      </div>
+                      <div className="p-2">
+                        <div className={`text-lg font-bold ${shouldPopulate ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>
+                          {shouldPopulate ? metrics.wordsRemaining : '-'}
+                        </div>
+                      </div>
+                      <div className="p-2">
+                        <div className={`text-lg font-bold ${shouldPopulate ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>
+                          {shouldPopulate ? metrics.informationValue.toFixed(1) : '-'}
+                        </div>
+                      </div>
+                    </div>
+                    {idx < 5 && (
+                      <hr className="border-gray-300 dark:border-gray-600" />
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
-
-            {/* Information Value */}
-            <div className="p-6 rounded-lg bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900">
-              <div className="text-center">
-                <div className="mb-4 text-5xl font-bold">📊</div>
-                <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">INFORMAȚIE</div>
-                <div className="mb-2 text-5xl font-bold text-green-600 dark:text-green-400">
-                  {cumulativeScores.avgInformation.toFixed(1)}
+            
+            {/* Averages Section */}
+            <div className="pt-4 mt-4 border-t-2 border-gray-400 dark:border-gray-500">
+              <div className="mb-2 text-sm font-semibold text-center text-gray-600 dark:text-gray-400">
+                Total
+              </div>
+              <div className="grid grid-cols-4 gap-4 text-center">
+                <div className="p-3 bg-gray-200 rounded dark:bg-gray-700">
+                  <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+                    {cumulativeScores.luck}
+                  </div>
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Valoare medie
+                <div className="p-3 bg-gray-200 rounded dark:bg-gray-700">
+                  <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+                    {cumulativeScores.skill}
+                  </div>
+                </div>
+                <div className="p-3 bg-gray-200 rounded dark:bg-gray-700">
+                  <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+                    {(() => {
+                      const relevantMetrics = analysis.guessMetrics.slice(0, currentGuessIndex + 1);
+                      const avgRemaining = relevantMetrics.reduce((sum, m) => sum + m.wordsRemaining, 0) / relevantMetrics.length;
+                      return Math.round(avgRemaining);
+                    })()}
+                  </div>
+                </div>
+                <div className="p-3 bg-gray-200 rounded dark:bg-gray-700">
+                  <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+                    {cumulativeScores.avgInformation.toFixed(1)}
+                  </div>
                 </div>
               </div>
             </div>
@@ -282,16 +345,16 @@ const Analysis: React.FC = () => {
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-col justify-center gap-4 mt-8 sm:flex-row">
+        <div className="flex flex-col justify-center gap-4 mt-8 sm:flex-row sm:gap-8">
           <button
             onClick={() => navigate(isProgressive ? `/game/progressive/` : `/game/`)} 
-            className="px-8 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+            className="px-8 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 min-w-40"
           >
             Joacă din nou
           </button>
           <button
             onClick={() => navigate('/')}
-            className="px-8 py-3 font-semibold text-white transition-colors bg-gray-600 rounded-lg hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600"
+            className="px-8 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 min-w-40"
           >
             Înapoi acasă
           </button>
