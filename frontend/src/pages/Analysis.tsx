@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GameAnalysis } from '../utils/analysis';
+import AnalysisModal from '../components/AnalysisModal';
 
 interface AnalysisState {
   analysis: GameAnalysis;
@@ -15,6 +16,8 @@ const Analysis: React.FC = () => {
   const navigate = useNavigate();
   
   const state = location.state as AnalysisState;
+
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
 
   // Redirect to home if no state is provided
   if (!state) {
@@ -90,6 +93,10 @@ const Analysis: React.FC = () => {
         {letter.toUpperCase()}
       </div>
     );
+  };
+
+  const handleAnalysisHelpClick = () => {
+    setShowAnalysisModal(true);
   };
 
   return (
@@ -246,7 +253,18 @@ const Analysis: React.FC = () => {
 
           {/* Right side - Scores */}
           <div className="flex flex-col p-6 rounded-lg bg-gray-50 dark:bg-gray-800">
-            <h3 className="flex justify-center mb-4 text-xl font-semibold">Statistici</h3>
+            <div className="relative flex items-center justify-center mb-6 text-gray-700 dark:text-gray-300">
+              <h3 className="text-xl font-semibold">Metrici</h3>
+              <button 
+                onClick={handleAnalysisHelpClick}
+                className="absolute right-0 p-1.5 sm:p-2 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                title="Informații despre metrici"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            </div>  
             
             {/* Header Row */}
             <div className="grid grid-cols-4 gap-4 pb-3 mb-3 text-sm font-semibold text-center text-gray-700 border-b-2 border-gray-300 dark:text-gray-300 dark:border-gray-600">
@@ -360,7 +378,14 @@ const Analysis: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <AnalysisModal
+        isOpen={showAnalysisModal}
+        onClose={() => setShowAnalysisModal(false)}
+      />
+      
     </div>
+    
   );
 };
 
