@@ -175,7 +175,6 @@ const Game: React.FC = () => {
             const analysis = analyzeGame(
               savedState.guesses, 
               savedState.targetWord, 
-              savedState.gameStatus === 'won', 
               progressiveMode.currentLevel,
               wordList
             );
@@ -514,7 +513,7 @@ const Game: React.FC = () => {
             saveStats(newStats);
             // Analyze the game
             const wordList = getWordList(currentWordLength);
-            const analysis = analyzeGame(newGuesses, prevState.targetWord, true, currentWordLength, wordList);
+            const analysis = analyzeGame(newGuesses, prevState.targetWord, currentWordLength, wordList);
             setGameAnalysis(analysis);
           } else {
             showMessage('Felicitări! Ai ghicit cuvântul!', 5000);
@@ -524,7 +523,7 @@ const Game: React.FC = () => {
             saveStats(newStats);
             // Analyze the game
             const wordList = getWordList(currentWordLength);
-            const analysis = analyzeGame(newGuesses, prevState.targetWord, true, currentWordLength, wordList);
+            const analysis = analyzeGame(newGuesses, prevState.targetWord, currentWordLength, wordList);
             setGameAnalysis(analysis);
             // Show stats modal after a delay
             setTimeout(() => setShowStatsModal(true), 2000);
@@ -538,7 +537,7 @@ const Game: React.FC = () => {
             saveStats(newStats);
             // Analyze the game
             const wordList = getWordList(currentWordLength);
-            const analysis = analyzeGame(newGuesses, prevState.targetWord, false, currentWordLength, wordList);
+            const analysis = analyzeGame(newGuesses, prevState.targetWord, currentWordLength, wordList);
             setGameAnalysis(analysis);
             // Show stats modal with reset option
             setTimeout(() => setShowStatsModal(true), 2000);
@@ -549,7 +548,7 @@ const Game: React.FC = () => {
             saveStats(newStats);
             // Analyze the game
             const wordList = getWordList(currentWordLength);
-            const analysis = analyzeGame(newGuesses, prevState.targetWord, false, currentWordLength, wordList);
+            const analysis = analyzeGame(newGuesses, prevState.targetWord, currentWordLength, wordList);
             setGameAnalysis(analysis);
             // Show stats modal after a delay
             setTimeout(() => setShowStatsModal(true), 2000);

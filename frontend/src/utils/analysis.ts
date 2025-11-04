@@ -75,12 +75,10 @@ const calculateWordsRemaining = (
   
   const feedback = checkGuess(guess, targetWord);
   const filteredWords = filterRemainingWords(remainingWords, guess, feedback);
-  console.log(`After guessing "${guess}", words remaining: ${filteredWords.length}`);
-  console.log('Remaining words:', filteredWords);
   return filteredWords.length;
 };
 
-// Calculate how much information a guess provides using word elimination
+// Calculate how much information a guess provides using entropy reduction
 const calculateInformationValue = (
   guess: string, 
   targetWord: string, 
@@ -103,9 +101,34 @@ const calculateInformationValue = (
   const wordsRemaining = calculateWordsRemaining(remainingWords, guess, targetWord);
   const wordsEliminated = initialWordCount - wordsRemaining;
   
-  // Information value based on how many words were eliminated
-  const eliminationRatio = wordsEliminated / Math.max(1, initialWordCount);
-  const informationValue = eliminationRatio * 10; // Scale to 0-10 range
+  // Information value based on entropy reduction (Shannon information theory)
+  // Even when no words are eliminated, the guess rules out letter combinations
+  let informationValue: number;
+  
+  if (wordsRemaining === 0) {
+    // Perfect elimination - maximum information
+    informationValue = Math.log2(Math.max(2, initialWordCount));
+  } else if (wordsRemaining === initialWordCount) {
+    // No words eliminated - but still gained info about which letters are NOT in the target
+    // Score based on feedback quality
+    const feedback = checkGuess(guess, targetWord);
+    const correctCount = feedback.filter(state => state === 'correct').length;
+    const presentCount = feedback.filter(state => state === 'present').length;
+    const absentCount = feedback.filter(state => state === 'absent').length;
+    
+    // Information from letters ruled out (absent) + partial matches (present)
+    // Each absent letter rules out a letter family; each present confirms a letter exists
+    informationValue = (absentCount * 0.3 + presentCount * 0.8 + correctCount * 3);
+  } else {
+    // Partial word elimination - use entropy reduction
+    // Information = log2(before/after)
+    const entropyBefore = Math.log2(Math.max(2, initialWordCount));
+    const entropyAfter = Math.log2(Math.max(2, wordsRemaining));
+    informationValue = entropyBefore - entropyAfter;
+    
+    // Scale to roughly 0-10 range for consistency
+    informationValue = Math.min(10, Math.max(0, informationValue * 1.5));
+  }
   
   return {
     informationValue,
@@ -158,19 +181,6 @@ const calculateSkillForGuess = (
     return skillScore;
   }
   
-  // Fallback logic when no word list is available
-  // Common starting words show good strategy
-  const goodStartingWords: Record<number, string[]> = {
-    5: ['adore', 'carne', 'parte', 'carte', 'verde'],
-    6: ['carton', 'portar', 'storce', 'porter'],
-    4: ['care', 'mare', 'dare', 'pare'],
-    // Add more as needed
-  };
-  
-  if (guessNumber === 1 && goodStartingWords[wordLength]?.includes(guess.toLowerCase())) {
-    skillScore += 2;
-  }
-  
   // Check for good letter distribution (vowels + consonants)
   const vowels = ['a', 'e', 'i', 'o', 'u', 'ă', 'î', 'â'];
   const vowelCount = guess.split('').filter(letter => vowels.includes(letter.toLowerCase())).length;
@@ -193,7 +203,6 @@ const calculateSkillForGuess = (
 export const analyzeGame = (
   guesses: string[],
   targetWord: string,
-  gameWon: boolean,
   wordLength: number,
   remainingWords?: string[]
 ): GameAnalysis => {
@@ -203,6 +212,9 @@ export const analyzeGame = (
   
   // Start with all possible words or empty array if not provided
   let currentRemainingWords = remainingWords ? [...remainingWords] : [];
+  
+  // Store the initial word count for proper first-guess evaluation
+  const initialWordCount = currentRemainingWords.length;
   
   // Store metrics for each guess
   const guessMetrics: GuessMetrics[] = [];
@@ -227,6 +239,9 @@ export const analyzeGame = (
     const infoResult = calculateInformationValue(guess, targetWord, currentRemainingWords);
     totalInformation += infoResult.informationValue;
     
+    // If this guess is correct, set remaining words to 0 (no more words to guess)
+    const displayWordsRemaining = feedback.every(state => state === 'correct') ? 0 : infoResult.wordsRemaining;
+    
     // Store metrics for this guess
     guessMetrics.push({
       guess,
@@ -235,7 +250,7 @@ export const analyzeGame = (
       skill: guessSkill,
       informationValue: infoResult.informationValue,
       wordsEliminated: infoResult.wordsEliminated,
-      wordsRemaining: infoResult.wordsRemaining,
+      wordsRemaining: displayWordsRemaining,
       feedback
     });
     
@@ -251,11 +266,15 @@ export const analyzeGame = (
   let normalizedLuck: number;
   
   if (remainingWords && remainingWords.length > 0) {
-    // Calculate based on information theory
-    const maxPossibleInformation = Math.log2(remainingWords.length) * guesses.length;
-    normalizedSkill = Math.min(100, Math.round((totalSkill / Math.max(1, maxPossibleInformation)) * 100));
+    // Calculate based on information theory using the INITIAL word count
+    // Maximum possible information for N guesses: log2(initialWordCount) bits per guess
+    const maxPossibleInformationPerGuess = Math.log2(Math.max(2, initialWordCount));
+    const maxPossibleTotalInformation = maxPossibleInformationPerGuess * guesses.length;
     
-    // Luck based on unexpected eliminations
+    // Normalize skill based on actual information gained vs maximum possible
+    normalizedSkill = Math.min(100, Math.round((totalSkill / Math.max(1, maxPossibleTotalInformation)) * 100));
+    
+    // Luck based on correct letter frequency (early correct letters are luckier)
     const averageLuck = totalLuck / Math.max(1, guesses.length);
     normalizedLuck = Math.min(100, Math.round(averageLuck * 10));
   } else {
@@ -267,16 +286,12 @@ export const analyzeGame = (
     normalizedLuck = Math.min(100, Math.round((totalLuck / Math.max(1, maxPossibleLuck)) * 100));
   }
   
-  // Bonus for winning
-  const finalLuck = gameWon ? Math.min(100, normalizedLuck + 10) : normalizedLuck;
-  const finalSkill = gameWon ? Math.min(100, normalizedSkill + 10) : normalizedSkill;
-  
   return {
-    luck: finalLuck,
-    skill: finalSkill,
+    luck: normalizedLuck,
+    skill: normalizedSkill,
     breakdown: {
       totalGuesses: guesses.length,
-      optimalGuesses: Math.max(1, Math.ceil(Math.log2(remainingWords?.length || 100))), // Information theory optimal
+      optimalGuesses: Math.max(1, Math.ceil(Math.log2(initialWordCount || 100))), // Information theory optimal
       luckyGuesses: Math.round(totalLuck / Math.max(1, wordLength)),
       averageInformationGained: totalInformation / Math.max(1, guesses.length)
     },

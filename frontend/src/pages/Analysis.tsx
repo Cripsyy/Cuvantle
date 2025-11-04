@@ -48,8 +48,9 @@ const Analysis: React.FC = () => {
     const normalizedLuck = Math.min(100, Math.round(averageLuck * 10));
     
     // Normalize skill (based on information theory)
-    const wordCount = relevantMetrics[0]?.wordsRemaining + relevantMetrics[0]?.wordsEliminated || 100;
-    const maxPossibleInformation = Math.log2(wordCount) * count;
+    // Use the first metric's word count to establish the total word space
+    const totalWordCount = (relevantMetrics[0]?.wordsRemaining ?? 0) + (relevantMetrics[0]?.wordsEliminated ?? 0) || 100;
+    const maxPossibleInformation = Math.log2(totalWordCount) * count;
     const normalizedSkill = Math.min(100, Math.round((totalSkill / Math.max(1, maxPossibleInformation)) * 100));
     
     return {
