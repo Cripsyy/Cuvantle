@@ -87,7 +87,7 @@ const AnalysisModal: React.FC<AnalysisModalProps> = ({
             <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
               <h3 className="font-semibold text-gray-700 dark:text-gray-300">Informație</h3>
               <p className="mt-1 text-xs text-gray-600 sm:text-sm dark:text-gray-400">
-                Cantitatea de informație obținută din încercarea respectivă
+                Procentul de informație obținută până la încercarea curentă
               </p>
             </div>
           </div>

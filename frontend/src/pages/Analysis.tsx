@@ -43,19 +43,13 @@ const Analysis: React.FC = () => {
     
     const count = relevantMetrics.length;
     
-    // Normalize luck (scale to 0-100)
-    const averageLuck = totalLuck / Math.max(1, count);
-    const normalizedLuck = Math.min(100, Math.round(averageLuck * 10));
-    
-    // Normalize skill (based on information theory)
-    // Use the first metric's word count to establish the total word space
-    const totalWordCount = (relevantMetrics[0]?.wordsRemaining ?? 0) + (relevantMetrics[0]?.wordsEliminated ?? 0) || 100;
-    const maxPossibleInformation = Math.log2(totalWordCount) * count;
-    const normalizedSkill = Math.min(100, Math.round((totalSkill / Math.max(1, maxPossibleInformation)) * 100));
+    // Metrics are already normalized to 0-100, just calculate averages
+    const averageLuck = Math.round(totalLuck / count);
+    const averageSkill = Math.round(totalSkill / count);
     
     return {
-      luck: normalizedLuck,
-      skill: normalizedSkill,
+      luck: averageLuck,
+      skill: averageSkill,
       avgInformation: totalInfo / count
     };
   }, [currentGuessIndex, analysis.guessMetrics]);
@@ -282,18 +276,12 @@ const Analysis: React.FC = () => {
                 const hasReachedThisRow = idx <= currentGuessIndex;
                 const shouldPopulate = hasReachedThisRow && metrics;
                 
-                // Calculate values only if we should populate
-                let normalizedLuck = 0;
-                let normalizedSkill = 0;
-                
+                // Calculate cumulative information up to this guess
+                let cumulativeInfo = 0;
                 if (shouldPopulate) {
-                  // Normalize luck (scale to 0-100)
-                  normalizedLuck = Math.min(100, Math.round(metrics.luck * 10));
-                  
-                  // Normalize skill (based on information theory)
-                  const wordCount = metrics.wordsRemaining + metrics.wordsEliminated || 100;
-                  const maxPossibleInformation = Math.log2(wordCount);
-                  normalizedSkill = Math.min(100, Math.round((metrics.skill / Math.max(1, maxPossibleInformation)) * 100));
+                  for (let i = 0; i <= idx; i++) {
+                    cumulativeInfo += analysis.guessMetrics[i].informationValue;
+                  }
                 }
                 
                 return (
@@ -301,12 +289,12 @@ const Analysis: React.FC = () => {
                     <div className="grid grid-cols-4 gap-4 text-center">
                       <div className="p-2">
                         <div className={`text-lg font-bold ${shouldPopulate ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>
-                          {shouldPopulate ? normalizedLuck : '-'}
+                          {shouldPopulate ? metrics.luck : '-'}
                         </div>
                       </div>
                       <div className="p-2">
                         <div className={`text-lg font-bold ${shouldPopulate ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>
-                          {shouldPopulate ? normalizedSkill : '-'}
+                          {shouldPopulate ? metrics.skill : '-'}
                         </div>
                       </div>
                       <div className="p-2">
@@ -316,7 +304,7 @@ const Analysis: React.FC = () => {
                       </div>
                       <div className="p-2">
                         <div className={`text-lg font-bold ${shouldPopulate ? 'text-gray-700 dark:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}>
-                          {shouldPopulate ? metrics.informationValue.toFixed(1) : '-'}
+                          {shouldPopulate ? `${Math.round(cumulativeInfo)}%` : '-'}
                         </div>
                       </div>
                     </div>
@@ -346,16 +334,17 @@ const Analysis: React.FC = () => {
                 </div>
                 <div className="p-3 bg-gray-200 rounded dark:bg-gray-700">
                   <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-                    {(() => {
-                      const relevantMetrics = analysis.guessMetrics.slice(0, currentGuessIndex + 1);
-                      const avgRemaining = relevantMetrics.reduce((sum, m) => sum + m.wordsRemaining, 0) / relevantMetrics.length;
-                      return Math.round(avgRemaining);
-                    })()}
+                    {analysis.guessMetrics[currentGuessIndex]?.wordsRemaining}
                   </div>
                 </div>
                 <div className="p-3 bg-gray-200 rounded dark:bg-gray-700">
                   <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-                    {cumulativeScores.avgInformation.toFixed(1)}
+                    {(() => {
+                      // Calculate final cumulative information percentage
+                      const relevantMetrics = analysis.guessMetrics.slice(0, currentGuessIndex + 1);
+                      const finalInfo = relevantMetrics.reduce((sum, m) => sum + m.informationValue, 0);
+                      return `${Math.round(finalInfo)}%`;
+                    })()}
                   </div>
                 </div>
               </div>
