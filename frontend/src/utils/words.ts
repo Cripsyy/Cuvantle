@@ -35,7 +35,6 @@ export const loadWordsFromFile = async (wordLength: number): Promise<string[]> =
       .map(word => word.trim().toLowerCase())
       .filter(word => word.length === wordLength);
     wordsLoaded[wordLength] = true;
-    console.log(`Loaded ${LOADED_WORDS[wordLength].length} Romanian ${wordLength}-letter words`);
     return LOADED_WORDS[wordLength];
   } catch (error) {
     console.warn(`Could not load ${wordLength}-letter words from file, using fallback word list:`, error);
@@ -57,13 +56,11 @@ export const getRandomWord = (wordLength: number): string => {
   }
   const randomIndex = Math.floor(Math.random() * words.length);
   const selectedWord = words[randomIndex];
-  console.log('Selected target word:', selectedWord); // Debug log
   return selectedWord;
 };
 
 export const isValidWord = (word: string, wordLength: number): boolean => {
   const words = getWordList(wordLength);
   const isValid = words.includes(word.toLowerCase());
-  console.log('Checking word validity:', word, 'Is valid:', isValid); // Debug log
   return isValid;
 };

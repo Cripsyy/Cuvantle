@@ -1,7 +1,6 @@
 import { LetterState, Tile } from '../types/game';
 
 export const checkGuess = (guess: string, targetWord: string): LetterState[] => {
-  console.log('Checking guess:', guess, 'against target:', targetWord); // Debug log
   
   const wordLength = targetWord.length;
   const result: LetterState[] = new Array(wordLength).fill('absent');
@@ -26,7 +25,6 @@ export const checkGuess = (guess: string, targetWord: string): LetterState[] => 
     }
   }
   
-  console.log('Guess result:', result); // Debug log
   return result;
 };
 

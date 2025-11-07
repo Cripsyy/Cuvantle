@@ -85,7 +85,6 @@ export const saveProgressiveGameState = (currentMode: ProgressiveMode, gameState
     ...currentMode,
     savedGameState: gameState
   };
-  console.log('Saving progressive game state:', newMode);
   saveProgressiveMode(newMode);
   return newMode;
 };

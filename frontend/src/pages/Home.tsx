@@ -31,11 +31,6 @@ const Home: React.FC<HomeProps> = ({ isDarkMode, onDarkModeToggle }) => {
   };
 
   const handleProgressiveModeClick = () => {
-    console.log('Progressive mode click - State:', progressiveMode);
-    console.log('Has saved game state:', hasSavedGameState(progressiveMode));
-    console.log('Current level:', progressiveMode.currentLevel);
-    console.log('Is active:', progressiveMode.isActive);
-    
     if (progressiveMode.isActive && (progressiveMode.currentLevel > 3 || hasSavedGameState(progressiveMode))) {
       // Continue existing game
       handleProgressiveModeResume();
